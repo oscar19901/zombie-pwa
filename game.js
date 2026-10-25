@@ -170,9 +170,16 @@ const bite=(()=>{const c=document.createElement('canvas');c.width=256;c.height=1
 // ===== Botín, interiores, monedas y tienda =====
 const loot=[];let inside=null,shopOpen=false,hintT=0;const rooms={};
 const LT={lata:{i:'🥫',n:'Lata de comida'},moneda:{i:'🪙',n:'Monedas'},agua:{i:'💧',n:'Agua para la pistola'},venda:{i:'🩹',n:'Venda'},arma:{i:'🎁',n:'Arma'}};
+let COIN=null;function coinMesh(){if(!COIN){const gold=new THREE.MeshStandardMaterial({color:0xffc107,metalness:1,roughness:.25,emissive:0x8a5a00,emissiveIntensity:.6}),dark=new THREE.MeshStandardMaterial({color:0xe6a100,metalness:1,roughness:.35,emissive:0x5a3a00,emissiveIntensity:.5});
+ const pr=[];const R=.32,T=.05;[[0,-T],[R-.03,-T],[R,-T+.03],[R,T-.03],[R-.03,T],[0,T]].forEach(p=>pr.push(new THREE.Vector2(p[0],p[1])));const body=new THREE.LatheGeometry(pr,28);
+ const rim=new THREE.TorusGeometry(R-.025,.022,8,28);const st=new THREE.Shape();for(let k=0;k<10;k++){const a=k/10*Math.PI*2+Math.PI/2,r=k%2?.075:.17;k?st.lineTo(Math.cos(a)*r,Math.sin(a)*r):st.moveTo(Math.cos(a)*r,Math.sin(a)*r)}
+ const star=new THREE.ExtrudeGeometry(st,{depth:.02,bevelEnabled:true,bevelSize:.008,bevelThickness:.008,bevelSegments:1});const spk=new THREE.SpriteMaterial({color:0xfff8c0,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending});
+ COIN={body,rim,star,gold,dark,spk};[body,rim,star].forEach(x=>SHARED.add(x));[gold,dark,spk].forEach(x=>SHARED.add(x))}
+ const g=new THREE.Group();const b=new THREE.Mesh(COIN.body,COIN.gold);b.rotation.x=Math.PI/2;g.add(b);[1,-1].forEach(sd=>{const r=new THREE.Mesh(COIN.rim,COIN.dark);r.position.z=sd*.05;g.add(r);const s=new THREE.Mesh(COIN.star,COIN.dark);s.position.z=sd*.05;if(sd<0)s.rotation.y=Math.PI;g.add(s)});
+ for(let k=0;k<2;k++){const sp=new THREE.Sprite(COIN.spk);sp.scale.setScalar(.12);sp.userData.spark=k;g.add(sp)}g.userData.coin=1;g.castShadow=true;return g}
 function lootMesh(t){const g=new THREE.Group();let m;
  if(t=='lata'){m=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.45,14),M(0xe53935));const lb=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.2,14),M(0xfff59d));m.add(lb)}
- else if(t=='moneda'){m=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.08,18),new THREE.MeshStandardMaterial({color:0xffd54f,metalness:.8,roughness:.3,emissive:0x6d4c00}));m.rotation.x=Math.PI/2}
+ else if(t=='moneda'){m=coinMesh()}
  else if(t=='agua'){m=new THREE.Mesh(new THREE.CylinderGeometry(.18,.2,.6,12),new THREE.MeshStandardMaterial({color:0x29b6f6,transparent:true,opacity:.85,emissive:0x01579b}));const cp=box(.15,.12,.15,0x0d47a1);cp.position.y=.36;m.add(cp)}
  else if(t=='venda'){m=box(.5,.3,.4,0xffffff);const c1=box(.3,.32,.08,0xe53935),c2=box(.08,.32,.3,0xe53935);m.add(c1,c2)}
  else if(t=='fruta'){const col=FRC[Math.floor(Math.random()*FRC.length)];m=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.8,roughness:.3}));const lf=new THREE.Mesh(new THREE.ConeGeometry(.12,.3,6),new THREE.MeshStandardMaterial({color:0x76ff03,emissive:0x2e7d32}));lf.position.y=.38;lf.rotation.z=.5;m.add(lf);const halo=new THREE.Mesh(new THREE.SphereGeometry(.55,14,10),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.25,depthWrite:false}));m.add(halo);m.position.y=1.1;m.castShadow=false;const gl=new THREE.Mesh(new THREE.RingGeometry(.45,.65,20),new THREE.MeshBasicMaterial({color:col,side:2,transparent:true,opacity:.7}));gl.rotation.x=-Math.PI/2;gl.position.y=.04;g.add(m,gl);g.userData.t=t;g.userData.fruit=m;g.userData.ph=Math.random()*6;return g}
@@ -271,7 +278,9 @@ addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifie
 addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jid){jid=null;jv={x:0,y:0};$('knob').style.transform=''}if(t.identifier===lid)lid=null}});
 function updW(){const W=WEAP[S.cur];$('wpn').textContent=W.i+' '+W.n+(W.m?'':' (💧'+S.ammo+')');$('coins').textContent=S.coins;$('ammo').textContent=S.ammo;held.visible=!!W.m&&S.cur>0;if(W.m&&S.cur>0){held.material.color.set(W.c);held.scale.y=W.len}if(!W.m){held.visible=true;held.material.color.set(S.cur==4?0x29b6f6:0xff7043);held.scale.y=.5}}
 function nextW(){if(!S)return;const i=S.weap.indexOf(S.cur);S.cur=S.weap[(i+1)%S.weap.length];updW();msg(WEAP[S.cur].i+' '+WEAP[S.cur].n,1)}
-function attack(){WEAP[S.cur].m?melee():shoot()}
+let face=0,faceTgt=0,faceLock=0;
+function aimFace(){let b=null,bd=12;zombies.forEach(z=>{const d=z.position.distanceTo(player.position);if(d<bd){bd=d;b=z}});faceTgt=b?Math.atan2(-(b.position.x-player.position.x),-(b.position.z-player.position.z)):yaw;faceLock=.45}
+function attack(){aimFace();WEAP[S.cur].m?melee():shoot()}
 function melee(){if(!playing||fireCD>0)return;let W=WEAP[S.cur];if(!W.m){const best=S.weap.filter(w=>WEAP[w].m).pop();W=WEAP[best]}fireCD=W.cd;swing=.3;pRig?.play(W===WEAP[0]?'Punch_Right':'Sword_Slash',.08,true,1.8);
  const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
  for(const z of zombies){if(z.userData.sleep)continue;const dx=z.position.x-player.position.x,dz=z.position.z-player.position.z,d=Math.hypot(dx,dz);
@@ -314,18 +323,19 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
  if(keys.KeyQ||keys.KeyA)yaw+=dt*2.2;if(keys.KeyD)yaw-=dt*2.2;if(keys.KeyW)pitch=Math.max(-.3,pitch-dt);if(keys.KeyS)pitch=Math.min(1.1,pitch+dt);
  const sp=(keys.ShiftLeft||runT?9:5.5)*dt,l=Math.hypot(mx,mz);if(l>.1){if(l>1){mx/=l;mz/=l}
   const s=Math.sin(yaw),c=Math.cos(yaw);let nx=player.position.x+(mx*c+mz*s)*sp,nz=player.position.z+(-mx*s+mz*c)*sp;
-  if(free(nx,player.position.z))player.position.x=nx;if(free(player.position.x,nz))player.position.z=nz;
+  if(faceLock<=0)faceTgt=Math.atan2(-(mx*c+mz*s),-(-mx*s+mz*c));if(free(nx,player.position.z))player.position.x=nx;if(free(player.position.x,nz))player.position.z=nz;
   walkT+=sp*1.7;legL.rotation.x=Math.sin(walkT)*.7;legR.rotation.x=-legL.rotation.x;armL.rotation.x=-legL.rotation.x*.8;if(Math.random()<dt*(sp>.1?14:6))puff(player.position.clone().setY(.1),0xb0a48a,1,1.5,.18,2,.5)}else{legL.rotation.x*=.8;legR.rotation.x*=.8;armL.rotation.x*=.8}
  if(pRig){if(pRig.lock>0)pRig.lock-=dt;else pRig.play(l>.1?(sp>6*dt?'Run':'Walk'):'Idle',.2,false,l>.1?1.2:1)}
  if(biteT>0){biteT-=dt;bite.visible=true;bite.position.copy(player.position).add(_v.set(0,3.1,0));bite.scale.setScalar(1.6+Math.sin(biteT*30)*.15).setY(.8)}else bite.visible=false;
  if((merchantT-=dt)<=0&&merchantHere()&&!inside&&merchant.position.distanceTo(player.position)<4){merchantT=8;merchant.userData.rig?.play('Wave',.2,true);msg('🧑‍🌾 Comerciante: ¡Hola! Pulsa E / COMPRAR para ver mi tienda 🛒',4)}
  if(merchant.userData.rig&&merchant.userData.rig.lock>0){merchant.userData.rig.lock-=dt;if(merchant.userData.rig.lock<=0)merchant.userData.rig.play('Idle')}
+ if(merchant.visible&&merchant.position.distanceTo(player.position)<9){let t=Math.atan2(player.position.x-merchant.position.x,player.position.z-merchant.position.z),d=t-merchant.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));merchant.rotation.y+=d*Math.min(1,dt*4)}
  const mh=merchantHere();merchant.visible=mh;mObst.r=mh?1.2:0;
  doorCD-=dt;if(inside){const rm=inside.rm;roomFill.position.set(player.position.x+Math.sin(camYaw)*2.5,3.2,player.position.z+Math.cos(camYaw)*2.5);if(doorCD<=0&&player.position.z>rm.D/2-1.1&&Math.abs(player.position.x-rm.RX)<2.2){leave()}else{player.position.x=Math.max(rm.RX-rm.W/2+.6,Math.min(rm.RX+rm.W/2-.6,player.position.x));player.position.z=Math.max(-rm.D/2+.9,Math.min(rm.D/2-.6,player.position.z))}}
- for(let i=loot.length-1;i>=0;i--){const lo=loot[i];lo.children[0].rotation.y+=dt*2;lo.children[0].position.y=.7+Math.sin(performance.now()/300+i)*.1;if(lo.userData.auto&&lo.position.distanceTo(player.position)<1.3)take(lo)}
+ for(let i=loot.length-1;i>=0;i--){const lo=loot[i];lo.children[0].rotation.y+=dt*2;lo.children[0].position.y=.7+Math.sin(performance.now()/300+i)*.1;if(lo.children[0].userData.coin){lo.children[0].rotation.y+=dt*2;lo.children[0].children.forEach(c=>{if(c.isSprite){const a=performance.now()/400+c.userData.spark*3+i;c.position.set(Math.cos(a)*.38,Math.sin(a*1.7)*.3,.08);c.material.opacity=.5+.5*Math.sin(a*3);c.scale.setScalar(.08+.08*Math.abs(Math.sin(a*2)))}})}if(lo.userData.auto&&lo.position.distanceTo(player.position)<1.3)take(lo)}
  doors.forEach(d=>d.ring.material.opacity=.5+Math.sin(performance.now()/250)*.3);
  if((hintT-=dt)<=0){hintT=.3;const ul=useLabel();$('use').innerHTML=ul;if(msgT<=0&&!ul.includes('AGARRAR')||msgT<=0&&nearest(loot,2))msg('Pulsa E: '+ul.replace('<br>',' '),.5)}
- player.rotation.y=yaw;if(swing>0){swing-=dt;arm.rotation.x=-Math.sin((.3-swing)/.3*Math.PI)*1.6;arm.rotation.y=Math.sin((.3-swing)/.3*Math.PI)*.8}else{arm.rotation.x=arm.rotation.y=0}
+ if(faceLock>0)faceLock-=dt;{let d=faceTgt-face;d=Math.atan2(Math.sin(d),Math.cos(d));face+=d*Math.min(1,dt*12)}player.rotation.y=face;if(swing>0){swing-=dt;arm.rotation.x=-Math.sin((.3-swing)/.3*Math.PI)*1.6;arm.rotation.y=Math.sin((.3-swing)/.3*Math.PI)*.8}else{arm.rotation.x=arm.rotation.y=0}
  lamps.forEach(l=>l.material.color.set(night?0xfff3b0:0x555555));
  for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.rotation.y+=dt*2;if(p.position.distanceTo(player.position)<1.5){const w=p.userData.w;scene.remove(p);pickups.splice(i,1);markTaken(p.userData.id);if(!S.weap.includes(w))S.weap.push(w);S.cur=w;updW();msg('¡Encontraste: '+WEAP[w].i+' '+WEAP[w].n+'!',3)}}
  // cajas
@@ -355,4 +365,4 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
 addEventListener('visibilitychange',save);
 loop();window.__ok=true;
 
-window.__g={free,chunks:()=>chunks,objCount:()=>{let n=0;scene.traverse(()=>n++);return n},info:()=>renderer.info.memory,spawnBoss,boss:()=>boss,gainXP,spawnFruits,take,yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
+window.__g={face:()=>face,addLoot,merchant,free,chunks:()=>chunks,objCount:()=>{let n=0;scene.traverse(()=>n++);return n},info:()=>renderer.info.memory,spawnBoss,boss:()=>boss,gainXP,spawnFruits,take,yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
