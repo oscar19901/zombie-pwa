@@ -20,3 +20,9 @@ CC0: https://creativecommons.org/publicdomain/zero/1.0/
 ## Vehículos (CC0 1.0 – dominio público)
 Autor: **Kenney** (https://kenney.nl) – "Car Kit" (v3.1), https://kenney.nl/assets/car-kit. Descargado el 25-oct-2026 con licencia CC0 (archivo License.txt del pack).
 Archivos: models/autos/sedan.glb, taxi.glb, police.glb, van.glb, truck.glb, suv.glb y models/autos/Textures/colormap.png. En el juego cada modelo se fusiona en una sola geometría que comparte un único material.
+
+## Armas (CC0 1.0 – dominio público)
+Autor: **Kenney** (https://kenney.nl). Descargadas el 25-oct-2026; licencia CC0 según el License.txt de cada pack.
+- "Blaster Kit" (v2.1), https://kenney.nl/assets/blaster-kit: models/armas/blaster/blaster-k.glb (Pistola de agua), blaster-b.glb (Lanzador gigante) y Textures/colormap.png.
+- "Survival Kit", https://kenney.nl/assets/survival-kit: models/armas/survival/tool-axe.glb (Palo-machete, mostrado como hacha) y Textures/colormap.png.
+- El Bate y el Tubo son modelos procedurales hechos para este proyecto: ningún pack CC0 traía esas armas.
