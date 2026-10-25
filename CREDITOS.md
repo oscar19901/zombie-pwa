@@ -16,3 +16,7 @@ CC0: https://creativecommons.org/publicdomain/zero/1.0/
 ## Código
 - three.js r160 (three.module.js, GLTFLoader, SkeletonUtils, BufferGeometryUtils) – Licencia MIT, © 2010-2023 three.js authors – https://github.com/mrdoob/three.js
 - Texturas, sonidos/efectos, iconos y lógica del juego: creados de forma procedural para este proyecto.
+
+## Vehículos (CC0 1.0 – dominio público)
+Autor: **Kenney** (https://kenney.nl) – "Car Kit" (v3.1), https://kenney.nl/assets/car-kit. Descargado el 25-oct-2026 con licencia CC0 (archivo License.txt del pack).
+Archivos: models/autos/sedan.glb, taxi.glb, police.glb, van.glb, truck.glb, suv.glb y models/autos/Textures/colormap.png. En el juego cada modelo se fusiona en una sola geometría que comparte un único material.

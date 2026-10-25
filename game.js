@@ -81,10 +81,10 @@ function* genChunkG(ci,cj){const key=ci+','+cj;const ch={key,ci,cj,g:new THREE.G
   for(const[ox,oz]of[[-6,-6],[6,-6],[-6,6],[6,6]]){const x=cx+ox,z=cz+oz;const a=rnd(),w=7+rnd()*3,d=7+rnd()*3,h=4+rnd()*12;if(nearBase(x,z,8)||a<.15)continue;building(x,z,w,d,h);yield}}
  // autos
  for(let i=0;i<5;i++){const v=rnd()<.5,o=rnd()<.5?0:G,t=rnd()*CH,sd=rnd()<.5?-2.5:2.5;let x=v?X0+o+sd:X0+t,z=v?Z0+t:Z0+o+sd;if(nearBase(x,z,4)){rnd();continue}
- const g=new THREE.Group();const b=box(2,1,4,ccol[i%6]);b.position.y=.7;const tp=box(1.8,.7,2,0x8fb3c9);tp.position.set(0,1.5,-.2);const rf=box(1.84,.12,2.04,ccol[i%6]);rf.position.set(0,1.88,-.2);
+ const g=new THREE.Group();if(CARS.length){const cv=CARS[Math.abs(i*7+Math.round(X0/CH)*3+Math.round(Z0/CH)*5)%CARS.length];const cm=new THREE.Mesh(cv,CARM);cm.castShadow=true;cm.receiveShadow=!LOW;g.add(cm)}else{const b=box(2,1,4,ccol[i%6]);b.position.y=.7;const tp=box(1.8,.7,2,0x8fb3c9);tp.position.set(0,1.5,-.2);const rf=box(1.84,.12,2.04,ccol[i%6]);rf.position.set(0,1.88,-.2);
  const bm=box(2.05,.25,.2,0x9e9e9e);bm.position.set(0,.45,2.05);const bm2=bm.clone();bm2.position.z=-2.05;const hl=box(.4,.2,.05,0xfff59d);hl.position.set(-.6,.8,2.01);const hl2=hl.clone();hl2.position.x=.6;
  const tl=box(.4,.2,.05,0xd32f2f);tl.position.set(-.6,.8,-2.01);const tl2=tl.clone();tl2.position.x=.6;g.add(b,tp,rf,bm,bm2,hl,hl2,tl,tl2);
- for(const[wx,wz]of[[-1,1.3],[1,1.3],[-1,-1.3],[1,-1.3]]){const w=new THREE.Mesh(cg('wheel',()=>new THREE.CylinderGeometry(.4,.4,.3,10)),M(0x111111));w.rotation.z=Math.PI/2;w.position.set(wx,.4,wz);g.add(w)}
+ for(const[wx,wz]of[[-1,1.3],[1,1.3],[-1,-1.3],[1,-1.3]]){const w=new THREE.Mesh(cg('wheel',()=>new THREE.CylinderGeometry(.4,.4,.3,10)),M(0x111111));w.rotation.z=Math.PI/2;w.position.set(wx,.4,wz);g.add(w)}}
  g.position.set(x,0,z);g.rotation.y=(v?0:Math.PI/2)+(rnd()-.5)*.6;if(rnd()<.2)g.rotation.z=.15;CUR.g.add(g);CUR.rects.push({x,z,w:v?1.4:2.4,d:v?2.4:1.4});CUR.hide.push([x+(v?2:0),z+(v?0:2)])}
  yield;
  // escombros
@@ -168,6 +168,16 @@ function rig(o,clips){const mx=new THREE.AnimationMixer(o);const acts={};clips.f
   a.enabled=true;a.setEffectiveWeight(1);if(r.cur&&r.cur!==a)a.crossFadeFrom(r.cur,fade,false);a.play();r.cur=a;r.lock=once?a.getClip().duration/ts:0}};return r}
 const blocky=[body,head,cap,armM,hand,legL,legR,armL,eyeP,eyeP2,bp];let pRig=null,pModel=null;
 const loader=new GLTFLoader();const loadM=u=>new Promise((ok,ko)=>loader.load(u,ok,undefined,ko));
+// autos Kenney (CC0): una geometría fusionada por variante + 1 material compartido
+const CARS=[],CAR_NAMES=['sedan','taxi','police','van','truck','suv'];let CARM=null,carsPend=false;
+function bakeCar(gl){const sc=gl.scene;sc.updateMatrixWorld(true);const gs=[];let map=null;
+ sc.traverse(o=>{if(!o.isMesh)return;if(!map&&o.material?.map)map=o.material.map;let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(o.matrixWorld);for(const k of Object.keys(g.attributes))if(!['position','normal','uv'].includes(k))g.deleteAttribute(k);if(!g.attributes.uv)return;gs.push(g)});
+ const mg=mergeGeometries(gs,false);gs.forEach(g=>g.dispose());if(!mg)return null;mg.computeBoundingBox();let b=mg.boundingBox;
+ if(b.max.x-b.min.x>b.max.z-b.min.z){mg.rotateY(Math.PI/2);mg.computeBoundingBox();b=mg.boundingBox}
+ const s=4.3/(b.max.z-b.min.z);mg.translate(-(b.max.x+b.min.x)/2,-b.min.y,-(b.max.z+b.min.z)/2);mg.scale(s,s,s);mg.computeBoundingSphere();SHARED.add(mg);
+ if(!CARM&&map){map.colorSpace=THREE.SRGBColorSpace;CARM=new THREE.MeshStandardMaterial({map,roughness:.65,metalness:.15});SHARED.add(CARM);SHARED.add(map)}return mg}
+const carsReady=Promise.all(CAR_NAMES.map(n=>loadM('models/autos/'+n+'.glb').then(bakeCar).catch(e=>{console.warn('Auto no cargado, uso cajas:',n,e.message);return null}))).then(gs=>{
+ if(!CARM)return;gs.forEach(g=>g&&CARS.push(g));window.__cars=CARS.length;if(CARS.length&&chunks.size){if(inside)carsPend=true;else{resetChunks();updChunks(true)}}});
 const modelsReady=Promise.all([['jugador','models/jugador.glb'],['zombie','models/zombie.glb'],['comerciante','models/comerciante.glb']].map(([k,u])=>loadM(u).then(g=>MOD[k]=g).catch(e=>console.warn('Modelo no cargado, uso bloques:',u,e.message)))).then(()=>{
  if(MOD.jugador){pModel=MOD.jugador.scene;fitModel(pModel,2.3);pModel.rotation.y=Math.PI;player.add(pModel);blocky.forEach(b=>b.visible=false);pRig=rig(pModel,MOD.jugador.animations);pRig.play('Idle')}
  if(MOD.comerciante){const m=MOD.comerciante.scene;fitModel(m,2.3);merchant.add(m);merchantBlock.visible=false;merchant.userData.rig=rig(m,MOD.comerciante.animations);merchant.userData.rig.play('Idle')}
@@ -262,7 +272,7 @@ function showWorld(){hiddenW.forEach(o=>o.visible=true);hiddenW=[]}
 function enter(dr){for(const k in rooms)if(k!=dr.id){scene.remove(rooms[k].g);disposeObj(rooms[k].g);delete rooms[k]}const rm=rooms[dr.id]||(rooms[dr.id]=buildRoom(dr.id));rm.g.visible=true;inside={rm,ret:{x:dr.x,z:dr.z},door:dr};hideWorld(rm);S.lastDoor={x:dr.x,z:dr.z};
  rm.items.forEach(([t,x,z,id],k)=>{if(k>0&&(hstr(id+'|'+Math.floor(S.day/3))%1000)/1000<DIF.rare())return;if(!isTaken(id)&&!loot.some(l=>l.userData.id==id))addLoot(t,x,z,id).userData.room=1});
  player.position.set(rm.RX,0,rm.D/2-2.6);yaw=0;camYaw=0;cam.position.set(rm.RX,4,rm.D/2+3);roomFill.visible=true;$('exitBtn').style.display='block';document.exitPointerLock?.();doorCD=1;msg('🏚️ Entraste. Agarra cosas con E. Para salir: botón 🚪 SALIR, tecla X, o camina a la puerta verde',4)}
-function leave(){if(!inside)return;const dr=inside.door;inside.rm.g.visible=false;roomFill.visible=false;$('exitBtn').style.display='none';doorCD=1.5;loot.filter(l=>l.userData.room).forEach(l=>{scene.remove(l);loot.splice(loot.indexOf(l),1)});inside=null;showWorld();let ez=dr.z+2.2;for(let k=0;k<6&&!free(dr.x,ez);k++)ez+=1;player.position.set(dr.x,0,ez);yaw=Math.PI;camYaw=Math.PI;cam.position.set(dr.x,4,ez-3);msg('🌆 De vuelta en la ciudad',2)}
+function leave(){if(!inside)return;setTimeout(()=>{if(carsPend&&!inside){carsPend=false;resetChunks();updChunks(true)}},0);const dr=inside.door;inside.rm.g.visible=false;roomFill.visible=false;$('exitBtn').style.display='none';doorCD=1.5;loot.filter(l=>l.userData.room).forEach(l=>{scene.remove(l);loot.splice(loot.indexOf(l),1)});inside=null;showWorld();let ez=dr.z+2.2;for(let k=0;k<6&&!free(dr.x,ez);k++)ez+=1;player.position.set(dr.x,0,ez);yaw=Math.PI;camYaw=Math.PI;cam.position.set(dr.x,4,ez-3);msg('🌆 De vuelta en la ciudad',2)}
 const roomFill=new THREE.PointLight(0xfff2d8,LOW?30:45,16,1.4);roomFill.visible=false;scene.add(roomFill);let doorCD=0,lastAct=0;
 function take(l){const t=l.userData.t;scene.remove(l);loot.splice(loot.indexOf(l),1);if(l.userData.id)markTaken(l.userData.id);puff(l.position.clone().setY(.8),0xffeb3b,10,4,.15,6,.5);let txt='';
  if(t=='lata'){S.food=Math.min(100,S.food+25);txt='🥫 ¡Lata de comida! +25 comida'}
@@ -380,7 +390,7 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
  const sp=(keys.ShiftLeft||runT?9:5.5)*dt,l=Math.hypot(mx,mz);if(l>.1){if(l>1){mx/=l;mz/=l}
   const s=Math.sin(yaw),c=Math.cos(yaw);let nx=player.position.x+(mx*c+mz*s)*sp,nz=player.position.z+(-mx*s+mz*c)*sp;
   if(faceLock<=0)faceTgt=Math.atan2(-(mx*c+mz*s),-(-mx*s+mz*c));if(free(nx,player.position.z))player.position.x=nx;if(free(player.position.x,nz))player.position.z=nz;
-  if(manT<=0&&!inside&&mz<-.2&&faceLock<=0&&Math.abs(Math.atan2(Math.sin(face-faceTgt),Math.cos(face-faceTgt)))<.25){let d=face-Math.PI-yaw;d=Math.atan2(Math.sin(d),Math.cos(d));yaw+=d*Math.min(1,dt*2.2)}
+  /* v11: sin auto-rotación de cámara (mareaba) */
   walkT+=sp*1.7;legL.rotation.x=Math.sin(walkT)*.7;legR.rotation.x=-legL.rotation.x;armL.rotation.x=-legL.rotation.x*.8;if(Math.random()<dt*(sp>.1?14:6))puff(player.position.clone().setY(.1),0xb0a48a,1,1.5,.18,2,.5)}else{legL.rotation.x*=.8;legR.rotation.x*=.8;armL.rotation.x*=.8}
  lastYaw=yaw;
  if(pRig){if(pRig.lock>0)pRig.lock-=dt;else pRig.play(l>.1?(sp>6*dt?'Run':'Walk'):'Idle',.2,false,l>.1?1.2:1)}
