@@ -26,3 +26,10 @@ Autor: **Kenney** (https://kenney.nl). Descargadas el 25-oct-2026; licencia CC0 
 - "Blaster Kit" (v2.1), https://kenney.nl/assets/blaster-kit: models/armas/blaster/blaster-k.glb (Pistola de agua), blaster-b.glb (Lanzador gigante) y Textures/colormap.png.
 - "Survival Kit", https://kenney.nl/assets/survival-kit: models/armas/survival/tool-axe.glb (Palo-machete, mostrado como hacha) y Textures/colormap.png.
 - El Bate y el Tubo son modelos procedurales hechos para este proyecto: ningún pack CC0 traía esas armas.
+
+## Biomas, animales y armaduras (v17)
+Descargados el 25-oct-2026 desde https://poly.pizza (modelos GLB con texturas incrustadas, sin carpeta Textures).
+- **Quaternius** (https://quaternius.com), CC0 1.0: models/animales/snake.glb, mono.glb, arana.glb, cactoro.glb, zorro.glb; models/bioma/palmera.glb, cactus.glb, cactus2.glb, roca.glb, roca2.glb; models/armadura/chaleco.glb, chaleco2.glb, escudo.glb, escudo2.glb.
+- **Kenney** (https://kenney.nl), CC0 1.0: models/bioma/casa.glb, casa2.glb, casa3.glb (casas de la colonia).
+- **"Football helmet" de Poly by Google**, licencia CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), vía https://poly.pizza: models/armadura/casco.glb. Se usa como casco de armadura; los colores se pasaron a colores de vértice.
+- El juego convierte los colores de los props en colores de vértice y fusiona cada prop en una sola geometría.
