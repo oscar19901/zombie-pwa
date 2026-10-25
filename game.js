@@ -193,12 +193,18 @@ function bakeW(gl,size){const sc=gl.scene;sc.updateMatrixWorld(true);const gs=[]
 const weapReady=Promise.all(Object.entries(WURL).map(([w,u])=>loadM(u).then(gl=>{const r=bakeW(gl,w==3?1.3:w==5?1.2:.8);if(r)WGEO[w]=r}).catch(e=>console.warn('Arma no cargada, uso bloques:',u,e.message)))).then(()=>{window.__weap=Object.keys(WGEO);pickups.forEach(refreshPickup);handW=-1;if(S)updW()});
 // orientación: rot del modelo para "mano" (eje largo hacia delante) y para el suelo
 const WROT={1:[Math.PI/2,0,0],2:[Math.PI/2,0,0],3:[Math.PI/2,0,0],4:[0,Math.PI,0],5:[0,Math.PI,0]};
+// agarre por arma en el hueso Wrist.R (ejes del hueso: Y=dedos, -X=delante, Z=afuera). b=[img X,img Y,img Z] de los ejes del modelo
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const GRIP={1:{b:[V3(0,0,1),V3(-1,0,0),V3(0,-1,0)],p:[-.45,.09,0]},2:{b:[V3(0,0,1),V3(-1,0,0),V3(0,-1,0)],p:[-.5,.09,0]},3:{b:[V3(0,0,1),V3(-1,0,0),V3(0,-1,0)],p:[-.45,.09,0]},
+ 4:{b:[V3(0,0,1),V3(0,-1,0),V3(1,0,0)],p:[0,.0,0]},5:{b:[V3(0,0,1),V3(0,-1,0),V3(1,0,0)],p:[0,0,0]}};
+function gripApply(m,w){const g=GRIP[w];if(!g)return;const M4=new THREE.Matrix4().makeBasis(...g.b);m.quaternion.setFromRotationMatrix(M4);m.position.set(...g.p);m.scale.setScalar(g.s||1)}
+window.__GRIP=GRIP;window.__regrip=()=>{handW=-1;updHeld()};
 function wMesh(w){const d=WGEO[w];if(!d)return null;const m=new THREE.Mesh(d.geo,d.mat);m.castShadow=true;m.userData.wm=1;return m}
 function refreshPickup(pk){const w=pk.userData.w;if(w===undefined||!WGEO[w]||pk.userData.has3d)return;const old=pk.children[0];const m=wMesh(w);if(!m||!old)return;m.position.copy(old.position);m.rotation.set(w>=4?0:0,0,w>=4?0:.6);if(w>=4){m.rotation.y=Math.PI/2}pk.remove(old);if(!SHARED.has(old.geometry))old.geometry.dispose?.();pk.add(m);pk.userData.has3d=1}
 let handG=null,handW=-1;
 function updHeld(){if(!S)return;const w=S.cur;if(!handG&&pModel){let bone=null;pModel.traverse(o=>{if(!bone&&/Wrist\.?R|Hand_?R|RightHand/i.test(o.name))bone=o});if(bone){handG=new THREE.Group();bone.add(handG);bone.updateMatrixWorld(true);const ws=new THREE.Vector3();bone.getWorldScale(ws);handG.scale.setScalar(1/ws.x)}}
  if(!handG){window.__held='box';return}if(handW===w)return;handW=w;while(handG.children.length)handG.remove(handG.children[0]);const m=w>0?wMesh(w):null;
- if(m){const r=WROT[w]||[0,0,0];m.rotation.set(...r);if(w<4)m.position.set(0,.12,0);else m.position.set(0,.08,.05);handG.add(m)}window.__held=m?'3d':'none';held.userData.off=!!m||w==0}
+ if(m){gripApply(m,w);handG.add(m)}window.__held=m?'3d':'none';held.userData.off=!!m||w==0}
 const carsReady=Promise.all(CAR_NAMES.map(n=>loadM('models/autos/'+n+'.glb').then(bakeCar).catch(e=>{console.warn('Auto no cargado, uso cajas:',n,e.message);return null}))).then(gs=>{
  if(!CARM)return;gs.forEach(g=>g&&CARS.push(g));window.__cars=CARS.length;if(CARS.length&&chunks.size){if(inside)carsPend=true;else{resetChunks();updChunks(true)}}});
 const modelsReady=Promise.all([['jugador','models/jugador.glb'],['zombie','models/zombie.glb'],['comerciante','models/comerciante.glb']].map(([k,u])=>loadM(u).then(g=>MOD[k]=g).catch(e=>console.warn('Modelo no cargado, uso bloques:',u,e.message)))).then(()=>{
@@ -339,7 +345,7 @@ function makeZ(){const g=new THREE.Group();const c=[0x7cb342,0x9ccc65,0x689f38][
  const hair=box(.5,.12,.5,0x4e342e);hair.position.y=2.58;const tear=box(.3,.25,.05,0x4527a0);tear.position.set(.2,1.1,.26);
  const limb=(w,hh,col,px,py)=>{const p=new THREE.Group();p.position.set(px,py,0);const m=box(w,hh,w,col);m.position.y=-hh/2;p.add(m);return p};
  const a1=limb(.25,.85,c,-.58,1.8),a2=limb(.25,.85,c,.58,1.8);a1.rotation.x=a2.rotation.x=-1.4;const l1=limb(.36,.8,0x455a64,-.22,.8),l2=limb(.36,.8,0x455a64,.22,.8);
- g.userData.limbs=[a1,a2,l1,l2];const l=mo;g.add(b,h,e1,e2,a1,a2,l1,l2,hair,tear);g.add(l);let x,z;do{const a=Math.random()*6.28,d=45+Math.random()*40;x=player.position.x+Math.cos(a)*d;z=player.position.z+Math.sin(a)*d}while(!free(x,z)||Math.hypot(x,z)<BASE+5||Math.abs(x)>WORLD||Math.abs(z)>WORLD);
+ g.userData.limbs=[a1,a2,l1,l2];const l=mo;g.add(b,h,e1,e2,a1,a2,l1,l2,hair,tear);g.add(l);let x,z,tr=0;do{const a=(tr<25?yaw+(Math.random()-.5)*3.2:Math.random()*6.28),d=24+Math.random()*32;x=player.position.x+Math.sin(a)*d;z=player.position.z+Math.cos(a)*d;tr++}while(tr<60&&(!free(x,z)||Math.hypot(x,z)<BASE+5));
  g.position.set(x,0,z);g.userData={limbs:g.userData.limbs,wt:Math.random()*6,hp:Math.round(3*DIF.hp()*10)/10,sp:(1.6+Math.random()*1.2)*DIF.sp(),hit:0};scene.add(g);zombies.push(g);attachZ(g)}
 function start(load){zombies.forEach(z=>scene.remove(z));crates.forEach(c=>scene.remove(c));balls.forEach(b=>scene.remove(b));zombies=[];crates=[];balls=[];
  const sv=load&&JSON.parse(localStorage.getItem('zsave')||'null');S=sv||fresh();player.position.set(S.x,0,S.z);yaw=S.yaw;
@@ -432,18 +438,19 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
  // cajas
  for(let i=crates.length-1;i>=0;i--){const c=crates[i];c.rotation.y+=dt;if(c.position.distanceTo(player.position)<1.6){scene.remove(c);crates.splice(i,1);markTaken(c.userData.id);S.food=Math.min(100,S.food+40);S.got++;puff(c.position.clone().setY(1),0xff5252,12,5,.2,9,.7);S.score+=0;msg('🍎 ¡Comida encontrada! +40')}}
  // zombies
- const want=Math.min(30,(night?6:2)+S.day*(night?2:1));if(!inside&&zombies.length<want&&Math.random()<dt*(night?1.2:.4)*DIF.rate())makeZ();
+ const want=Math.min(30,Math.round(((night?8:5)+S.day*(night?2:1))*Math.min(1.6,DIF.rate())));const nearN=zombies.filter(q=>!q.userData.sleep&&Math.hypot(q.position.x-player.position.x,q.position.z-player.position.z)<60).length;if(!inside&&zombies.length<want+4&&nearN<want&&Math.random()<dt*(nearN<want/2?3:1)*(night?1.2:.6)*DIF.rate())makeZ();window.__nearZ=nearN;
  for(let i=zombies.length-1;i>=0;i--){const z=zombies[i],u=z.userData;if(inside){u.rig?.play('Idle');continue}
   if(u.sleep){u.sleep-=dt;if(!u.rig){z.scale.multiplyScalar(1-dt*2);z.rotation.z+=dt*3}else if(u.sleep<.4)z.scale.multiplyScalar(1-dt*3);if(u.sleep<=0){scene.remove(z);zombies.splice(i,1)}continue}
   const dx=player.position.x-z.position.x,dz=player.position.z-z.position.z,d=Math.hypot(dx,dz);z.rotation.y=Math.atan2(dx,dz);
-  const det=(u.boss?999:28*(night?1.4:1)*DIF.det());if(d>det&&!u.boss){u.wa=(u.wa??Math.random()*6.28)+(Math.random()-.5)*dt;const wx=z.position.x+Math.sin(u.wa)*u.sp*.35*dt,wz=z.position.z+Math.cos(u.wa)*u.sp*.35*dt;if(free(wx,wz)&&Math.hypot(wx,wz)>BASE+1){z.position.x=wx;z.position.z=wz}else u.wa+=2;z.rotation.y=u.wa;u.rig?.play('Walk',.3,false,.5);continue}
-  if(d>1.2){let nx=z.position.x+dx/d*u.sp*dt,nz=z.position.z+dz/d*u.sp*dt;if(Math.hypot(nx,nz)<BASE+1){const a=Math.atan2(z.position.z,z.position.x)+dt*.5;nx=Math.cos(a)*(BASE+1);nz=Math.sin(a)*(BASE+1)}
-   if(free(nx,nz)){z.position.x=nx;z.position.z=nz}else{z.position.x+=dz/d*u.sp*dt;z.position.z-=dx/d*u.sp*dt}}
+  if(!u.boss&&d>90){scene.remove(z);zombies.splice(i,1);if(u.bar)scene.remove(u.bar);continue}if(u.boss&&d>60){const a=yaw+(Math.random()-.5);for(let k=0;k<12;k++){const bx=player.position.x+Math.sin(a+k*.5)*28,bz=player.position.z+Math.cos(a+k*.5)*28;if(free(bx,bz)&&Math.hypot(bx,bz)>BASE+6){z.position.set(bx,0,bz);break}}}
+  const det=(u.boss?999:34*(night?1.4:1)*DIF.det());if(d>det&&!u.boss){{const tg=Math.atan2(dx,dz);u.wa=(u.wa??tg)+(Math.random()-.5)*dt;let dd=tg-u.wa;dd=Math.atan2(Math.sin(dd),Math.cos(dd));u.wa+=dd*dt*.4}const wx=z.position.x+Math.sin(u.wa)*u.sp*.35*dt,wz=z.position.z+Math.cos(u.wa)*u.sp*.35*dt;if(free(wx,wz)&&Math.hypot(wx,wz)>BASE+1){z.position.x=wx;z.position.z=wz}else u.wa+=2;z.rotation.y=u.wa;u.rig?.play('Walk',.3,false,.5);continue}
+  if(d>1.2){let nx=z.position.x+dx/d*u.sp*dt,nz=z.position.z+dz/d*u.sp*dt;{const RB=BASE+(u.boss?3:1);if(Math.hypot(nx,nz)<RB){const a=Math.atan2(z.position.z,z.position.x)+dt*.5;nx=Math.cos(a)*RB;nz=Math.sin(a)*RB}}
+   if(u.boss||free(nx,nz)){z.position.x=nx;z.position.z=nz}else{z.position.x+=dz/d*u.sp*dt;z.position.z-=dx/d*u.sp*dt}}
   else if(dmgCD<=0){S.hp-=u.boss?(u.bdmg||25):Math.round(12*DIF.dmg());if(u.boss)msg('👹 ¡GRRR! ¡El jefe pega fuerte!',1.5);else dmgCD=.8;msg('¡Ay! 🧟');u.rig?.play('Attack',.1,true,1.4);biteT=.6;pRig?.play('HitRecieve',.1,true,1.5);puff(player.position.clone().setY(1.6),0xff80ab,6,3,.15,2,.5)}
   if(u.rig&&!(u.rig.lock>0)){u.rig.play(d>1.2?(u.sp>2.6?'Run':'Walk'):'Idle',.25,false,d>1.2?u.sp/1.8:1)}if(u.rig&&u.rig.lock>0)u.rig.lock-=dt;
   u.wt+=dt*u.sp*2.2;const [a1,a2,l1,l2]=u.limbs;l1.rotation.x=Math.sin(u.wt)*.6;l2.rotation.x=-l1.rotation.x;a1.rotation.x=-1.4+Math.sin(u.wt)*.25;a2.rotation.x=-1.4-Math.sin(u.wt)*.25;z.rotation.z=Math.sin(u.wt*.5)*.06;if(u.hit>0){u.hit-=dt;z.children[1].material.color.set(u.hit>0?0xffffff:0x7cb342)}
   if(u.bar){u.bar.position.set(z.position.x,5.6,z.position.z);u.bar.quaternion.copy(cam.quaternion);const p=Math.max(0,u.hp/u.max);u.bar.userData.fg.scale.x=Math.max(.001,p);u.bar.userData.fg.position.x=-1.5*(1-p);$('bossBar').style.width=p*100+'%';$('bossTxt').textContent=Math.ceil(u.hp*10)}
-  if(!u.boss&&d>110){scene.remove(z);zombies.splice(i,1);continue}if(!u.boss&&!night&&d>70&&Math.random()<dt*.2){scene.remove(z);zombies.splice(i,1)}}
+  }
  // bolas
  for(let i=balls.length-1;i>=0;i--){const b=balls[i];b.position.addScaledVector(b.userData.v,dt);b.userData.life-=dt;let hit=false;
   for(const z of zombies)if(!z.userData.sleep&&Math.hypot(z.position.x-b.position.x,z.position.z-b.position.z)<.9){hurtZ(z,b.userData.dmg);hit=true;break}
@@ -458,4 +465,4 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
 addEventListener('visibilitychange',save);
 loop();window.__ok=true;
 
-window.__g={addPickup,pickups,setW:n=>{S.cur=n;updW()},jump:()=>{jumpQ=true},py:()=>player.position.y,held:()=>window.__held,handG:()=>handG,draws:()=>renderer.info.render.calls,genQ:()=>genQ.length,face:()=>face,addLoot,merchant,free,chunks:()=>chunks,objCount:()=>{let n=0;scene.traverse(()=>n++);return n},info:()=>renderer.info.memory,spawnBoss,boss:()=>boss,gainXP,spawnFruits,take,yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
+window.__g={WGEO:()=>Object.fromEntries(Object.entries(WGEO).map(([k,v])=>{v.geo.computeBoundingBox();const b=v.geo.boundingBox;return[k,[b.min.toArray().map(x=>+x.toFixed(2)),b.max.toArray().map(x=>+x.toFixed(2))]]})),nearZ:()=>window.__nearZ,BASE,addPickup,pickups,setW:n=>{S.cur=n;updW()},jump:()=>{jumpQ=true},py:()=>player.position.y,held:()=>window.__held,handG:()=>handG,draws:()=>renderer.info.render.calls,genQ:()=>genQ.length,face:()=>face,addLoot,merchant,free,chunks:()=>chunks,objCount:()=>{let n=0;scene.traverse(()=>n++);return n},info:()=>renderer.info.memory,spawnBoss,boss:()=>boss,gainXP,spawnFruits,take,yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
