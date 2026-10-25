@@ -15,6 +15,8 @@ button{font-size:20px;padding:12px 26px;border-radius:14px;border:0;background:#
 #joy{position:fixed;left:20px;bottom:20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.4);z-index:6;display:none}
 #knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.6)}
 #fire,#run{position:fixed;right:20px;bottom:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,80,80,.6);z-index:6;display:none;font-size:15px;align-items:center;justify-content:center;font-weight:bold}
+#hit,#sw{position:fixed;right:20px;bottom:130px;width:80px;height:80px;border-radius:50%;background:rgba(255,170,0,.65);z-index:6;display:none;font-size:13px;align-items:center;justify-content:center;font-weight:bold;text-align:center}
+#sw{right:110px;bottom:110px;width:60px;height:60px;background:rgba(160,100,255,.65);font-size:11px}
 #run{right:120px;bottom:20px;width:65px;height:65px;background:rgba(80,160,255,.6);font-size:12px}
 #cross{position:fixed;left:50%;top:45%;width:14px;height:14px;margin:-7px;border:2px solid #fff;border-radius:50%;z-index:4;pointer-events:none}
 </style></head><body>
@@ -23,13 +25,13 @@ button{font-size:20px;padding:12px 26px;border-radius:14px;border:0;background:#
 <div class="p">❤️ Salud<div class="bar"><i id="hp" style="background:#e53935;width:100%"></i></div></div>
 <div class="p">🍎 Comida<div class="bar"><i id="fd" style="background:#ffb300;width:100%"></i></div></div>
 <div class="p">🚶 Salir por comida en: <span id="run3">3</span> días</div>
-<div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
+<div class="p">Arma: <span id="wpn">👊 Puños</span></div><div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
 </div>
 <div id="msg"></div><div id="cross"></div>
-<div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div>
+<div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div><div id="hit">👊<br>GOLPEAR</div><div id="sw">🔄<br>ARMA</div>
 <div id="start" class="scr"><h1>🧟 Sobrevive a los Zombies</h1>
-<p>Estás en tu casa segura 🏠. De noche vienen más zombies. ¡Lánzales bolas de agua para mandarlos a dormir!<br>Cada 3 días se acaba tu comida: sal a buscar las <b>cajas de comida 📦</b> por el mapa. Dentro de la cerca los zombies no entran y recuperas salud.</p>
-<p><b>PC:</b> WASD mover · Ratón mirar · Clic/Espacio disparar · Shift correr<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · botón disparar</p>
+<p>Vives en una casa segura 🏠 en medio de una ciudad abandonada. De noche vienen más zombies. Empiezas solo con tus puños 👊: busca <b>armas escondidas</b> (bate, tubo, palo-machete, pistola de agua, lanzador gigante) junto a los edificios y detrás de los autos. ¡Dales golpes o mójalos para mandarlos a dormir!<br>Cada 3 días se acaba tu comida: sal a buscar las <b>cajas de comida 📦</b> por el mapa. Dentro de la cerca los zombies no entran y recuperas salud.</p>
+<p><b>PC:</b> WASD mover (la cámara te sigue) · Ratón o flechas girar la cámara · Clic/Espacio atacar con el arma · F golpear · 1-6 o R cambiar arma · Shift correr<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · GOLPEAR, DISPARAR, ARMA y CORRER</p>
 <button id="bCont" style="display:none">Continuar</button><button id="bNew">Nuevo juego</button></div>
 <div id="over" class="scr" style="display:none"><h1>😵 ¡Fin del juego!</h1><p id="overTxt"></p><button id="bRe">Jugar otra vez</button></div>
 <script type="module" src="game.js"></script>
