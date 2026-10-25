@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1b2a3a"><link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png"><title>Sobrevive a los Zombies</title>
+<style>
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;touch-action:none}
+body{margin:0;overflow:hidden;background:#000;font-family:system-ui,Arial,sans-serif;color:#fff}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none;z-index:5}
+.p{background:rgba(0,0,0,.55);padding:6px 10px;border-radius:10px;font-size:14px;font-weight:bold}
+.bar{width:110px;height:10px;background:#333;border-radius:5px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%}
+#msg{position:fixed;top:70px;width:100%;text-align:center;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;pointer-events:none;z-index:5}
+.scr{position:fixed;inset:0;background:rgba(10,20,35,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:20;padding:20px}
+.scr h1{font-size:34px;margin:6px}.scr p{max-width:520px;line-height:1.4}
+button{font-size:20px;padding:12px 26px;border-radius:14px;border:0;background:#4caf50;color:#fff;font-weight:bold;margin:6px;cursor:pointer}
+#joy{position:fixed;left:20px;bottom:20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.4);z-index:6;display:none}
+#knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.6)}
+#fire,#run{position:fixed;right:20px;bottom:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,80,80,.6);z-index:6;display:none;font-size:15px;align-items:center;justify-content:center;font-weight:bold}
+#run{right:120px;bottom:20px;width:65px;height:65px;background:rgba(80,160,255,.6);font-size:12px}
+#cross{position:fixed;left:50%;top:45%;width:14px;height:14px;margin:-7px;border:2px solid #fff;border-radius:50%;z-index:4;pointer-events:none}
+</style></head><body>
+<div id="hud">
+<div class="p">📅 Día <span id="day">1</span> <span id="tod"></span></div>
+<div class="p">❤️ Salud<div class="bar"><i id="hp" style="background:#e53935;width:100%"></i></div></div>
+<div class="p">🍎 Comida<div class="bar"><i id="fd" style="background:#ffb300;width:100%"></i></div></div>
+<div class="p">🚶 Salir por comida en: <span id="run3">3</span> días</div>
+<div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
+</div>
+<div id="msg"></div><div id="cross"></div>
+<div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div>
+<div id="start" class="scr"><h1>🧟 Sobrevive a los Zombies</h1>
+<p>Estás en tu casa segura 🏠. De noche vienen más zombies. ¡Lánzales bolas de agua para mandarlos a dormir!<br>Cada 3 días se acaba tu comida: sal a buscar las <b>cajas de comida 📦</b> por el mapa. Dentro de la cerca los zombies no entran y recuperas salud.</p>
+<p><b>PC:</b> WASD mover · Ratón mirar · Clic/Espacio disparar · Shift correr<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · botón disparar</p>
+<button id="bCont" style="display:none">Continuar</button><button id="bNew">Nuevo juego</button></div>
+<div id="over" class="scr" style="display:none"><h1>😵 ¡Fin del juego!</h1><p id="overTxt"></p><button id="bRe">Jugar otra vez</button></div>
+<script type="module" src="game.js"></script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
+</body></html>
