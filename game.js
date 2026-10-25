@@ -122,7 +122,7 @@ merchant.add(merchantBlock);const stall=box(2.2,1,1,0x8d6e63);stall.position.set
 merchant.position.set(4.5,0,2);merchant.rotation.y=-.6;scene.add(merchant);const mObst={x:4.5,z:2,r:1.2};obst.push(mObst);let merchantT=0;
 function attachZ(g){if(!MOD.zombie||g.userData.model)return;const m=SkeletonUtils.clone(MOD.zombie.scene);fitModel(m,2.2);m.traverse(o=>{if(o.isMesh){o.material=o.material.clone()}});
  g.children.forEach(c=>c.visible=false);g.add(m);g.userData.model=m;g.userData.rig=rig(m,MOD.zombie.animations);g.userData.rig.play('Walk',0,false,1);g.userData.rig.mx.setTime(Math.random()*2)}
-function zFlash(z,on){z.userData.model?.traverse(o=>{if(o.isMesh&&o.material.emissive)o.material.emissive.setHex(on?0x666666:0)})}
+function zFlash(z,on){z.userData.model?.traverse(o=>{if(o.isMesh&&o.material.emissive)o.material.emissive.setHex(on?0x666666:(z.userData.boss?0x4a0072:0))})}
 // Burbuja de mordida caricaturesca
 const bite=(()=>{const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.fillStyle='#fff';x.strokeStyle='#222';x.lineWidth=6;x.beginPath();x.ellipse(128,60,118,50,0,0,7);x.fill();x.stroke();
  x.fillStyle='#e53935';x.font='bold 54px Arial';x.textAlign='center';x.fillText('¡ÑAM!',128,78);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(2,1,1);sp.visible=false;scene.add(sp);return sp})();let biteT=0;
@@ -134,8 +134,12 @@ function lootMesh(t){const g=new THREE.Group();let m;
  else if(t=='moneda'){m=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.08,18),new THREE.MeshStandardMaterial({color:0xffd54f,metalness:.8,roughness:.3,emissive:0x6d4c00}));m.rotation.x=Math.PI/2}
  else if(t=='agua'){m=new THREE.Mesh(new THREE.CylinderGeometry(.18,.2,.6,12),new THREE.MeshStandardMaterial({color:0x29b6f6,transparent:true,opacity:.85,emissive:0x01579b}));const cp=box(.15,.12,.15,0x0d47a1);cp.position.y=.36;m.add(cp)}
  else if(t=='venda'){m=box(.5,.3,.4,0xffffff);const c1=box(.3,.32,.08,0xe53935),c2=box(.08,.32,.3,0xe53935);m.add(c1,c2)}
+ else if(t=='fruta'){const col=FRC[Math.floor(Math.random()*FRC.length)];m=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.8,roughness:.3}));const lf=new THREE.Mesh(new THREE.ConeGeometry(.12,.3,6),new THREE.MeshStandardMaterial({color:0x76ff03,emissive:0x2e7d32}));lf.position.y=.38;lf.rotation.z=.5;m.add(lf);const halo=new THREE.Mesh(new THREE.SphereGeometry(.55,14,10),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.25,depthWrite:false}));m.add(halo);m.position.y=1.1;m.castShadow=false;const gl=new THREE.Mesh(new THREE.RingGeometry(.45,.65,20),new THREE.MeshBasicMaterial({color:col,side:2,transparent:true,opacity:.7}));gl.rotation.x=-Math.PI/2;gl.position.y=.04;g.add(m,gl);g.userData.t=t;g.userData.fruit=m;g.userData.ph=Math.random()*6;return g}
  else{m=box(.6,.6,.6,0xab47bc);const rb=box(.65,.15,.65,0xffeb3b);m.add(rb)}
  m.position.y=.7;m.castShadow=true;const gl=new THREE.Mesh(new THREE.RingGeometry(.45,.6,20),new THREE.MeshBasicMaterial({color:0xffeb3b,side:2}));gl.rotation.x=-Math.PI/2;gl.position.y=.04;g.add(m,gl);g.userData.t=t;return g}
+const FRC=[0xff4081,0x00e5ff,0xffea00,0xb388ff,0x69f0ae,0xff9100];
+function spawnFruits(){const r=srnd(777+S.day*13);for(let k=0;k<10;k++){const id='f'+S.day+'_'+k;let x,z,n=0;do{const a=r()*6.28,d=14+r()*80;x=Math.cos(a)*d;z=Math.sin(a)*d}while(!free(x,z)&&++n<30);if(!S.looted.includes(id)&&!loot.some(l=>l.userData.id==id))addLoot('fruta',x,z,id)}}
+function gainXP(n){S.xp+=n;let need=S.lvl*30;while(S.xp>=need){S.xp-=need;S.lvl++;S.maxHp+=20;S.hp=S.maxHp;need=S.lvl*30;banner('⭐ ¡SUBISTE AL NIVEL '+S.lvl+'!<br><small>Vida máxima: ❤️ '+S.maxHp+' · ¡Salud llena!</small>',5);puff(player.position.clone().setY(1.5),0xffeb3b,30,6,.2,-2,1.2)}}
 function addLoot(t,x,z,id,auto){const g=lootMesh(t);g.position.set(x,0,z);g.userData.id=id;g.userData.auto=auto;scene.add(g);loot.push(g);return g}
 function srnd(seed){return()=>{seed=(seed*16807)%2147483647;return seed/2147483647}}
 function buildRoom(i){const RX=1000+i*40,W=14,D=10,r=srnd(i*97+13);const g=new THREE.Group();g.position.set(RX,0,0);
@@ -149,7 +153,7 @@ function buildRoom(i){const RX=1000+i*40,W=14,D=10,r=srnd(i*97+13);const g=new T
  const rug=new THREE.Mesh(new THREE.CircleGeometry(1.8,24),M(0xc62828));rug.rotation.x=-Math.PI/2;rug.position.set(0,.02,-.5);g.add(tb,ch,sofa,rug);
  const bulb=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),new THREE.MeshBasicMaterial({color:0xfff3b0}));bulb.position.set(0,3.2,0);const L=new THREE.PointLight(0xffe0a0,LOW?20:35,22,1.6);L.position.set(0,3,0);g.add(bulb,L);
  scene.add(g);const spots=[[-5,-3.4],[-1.6,-3.4],[1.8,-3.4],[3.5,-1.2],[-3,0],[5.5,2.5],[-5.5,3.2],[1.5,1.8]].sort(()=>r()-.5);const n=3+Math.floor(r()*3);const items=[];
- const ts=['lata','moneda','agua','venda','moneda','lata'];for(let k=0;k<n;k++){let t=ts[Math.floor(r()*ts.length)];if(k==0&&r()<.4)t='arma';items.push([t,RX+spots[k][0],spots[k][1],'r'+i+'_'+k])}
+ const ts=['lata','moneda','agua','venda','moneda','lata'];for(let k=0;k<n;k++){let t=ts[Math.floor(r()*ts.length)];if(k==0&&r()<.4)t='arma';items.push([t,RX+spots[k][0],spots[k][1],'r'+i+'_'+k])}if(r()<.45)items.push(['fruta',RX+spots[n][0],spots[n][1],'r'+i+'_f'])
  return {g,RX,W,D,items,L}}
 function enter(dr){const rm=rooms[dr.id]||(rooms[dr.id]=buildRoom(dr.id));rm.g.visible=true;inside={rm,ret:{x:dr.x,z:dr.z},door:dr};
  rm.items.forEach(([t,x,z,id])=>{if(!S.looted.includes(id)&&!loot.some(l=>l.userData.id==id))addLoot(t,x,z,id)});
@@ -160,7 +164,8 @@ function take(l){const t=l.userData.t;scene.remove(l);loot.splice(loot.indexOf(l
  if(t=='lata'){S.food=Math.min(100,S.food+25);txt='🥫 ¡Lata de comida! +25 comida'}
  else if(t=='moneda'){const n=l.userData.auto?1+Math.floor(Math.random()*3):3+Math.floor(Math.random()*4);S.coins+=n;txt='🪙 +'+n+' monedas'}
  else if(t=='agua'){S.ammo+=10;txt='💧 +10 agua para la pistola'}
- else if(t=='venda'){S.hp=Math.min(100,S.hp+30);txt='🩹 ¡Venda! +30 salud'}
+ else if(t=='fruta'){S.regen=(S.regen||0)+50;txt='✨ ¡Fruta mágica! Recuperas salud poco a poco';puff(l.position.clone().setY(1),0xff80ff,24,4,.18,-3,1.2)}
+ else if(t=='venda'){S.hp=Math.min(S.maxHp,S.hp+30);txt='🩹 ¡Venda! +30 salud'}
  else{const opts=[1,2,3,4,5].filter(w=>!S.weap.includes(w));if(opts.length){const w=opts[Math.floor(Math.random()*opts.length)];S.weap.push(w);S.cur=w;txt='🎁 ¡Arma escondida: '+WEAP[w].i+' '+WEAP[w].n+'!'}else{S.coins+=8;txt='🎁 ¡Caja sorpresa! +8 🪙'}}
  updW();msg(txt,2.5)}
 const merchantHere=()=>S&&S.day%3===0;
@@ -172,7 +177,7 @@ function renderShop(){const w=shopWeapon();$('shopCoins').textContent=S.coins;$(
  return `<button class="sbtn" data-k="${k}" ${ok?'':'disabled'}><span>${it.i} ${n}</span><b>${it.p} 🪙</b></button>`}).join('');
  $('shopList').querySelectorAll('.sbtn').forEach(b=>b.onclick=()=>buy(+b.dataset.k))}
 function buy(k){const it=SHOP[k];if(S.coins<it.p){msg('No tienes suficientes monedas 🪙',2);return}S.coins-=it.p;
- if(it.k=='lata')S.food=Math.min(100,S.food+35);else if(it.k=='venda')S.hp=Math.min(100,S.hp+30);else if(it.k=='agua')S.ammo+=15;else{const w=shopWeapon();if(w===undefined){S.coins+=it.p;return}S.weap.push(w);S.cur=w}
+ if(it.k=='lata')S.food=Math.min(100,S.food+35);else if(it.k=='venda')S.hp=Math.min(S.maxHp,S.hp+30);else if(it.k=='agua')S.ammo+=15;else{const w=shopWeapon();if(w===undefined){S.coins+=it.p;return}S.weap.push(w);S.cur=w}
  updW();msg('🛒 ¡Compraste '+it.i+'! Gracias, vuelve pronto.',2);renderShop()}
 function nearest(arr,max,f=o=>o.position){let b=null,bd=max;for(const o of arr){const p=f(o),d=Math.hypot(p.x-player.position.x,p.z-player.position.z);if(d<bd){bd=d;b=o}}return b}
 function nearMerchant(){return merchantHere()&&!inside&&Math.hypot(merchant.position.x-player.position.x,merchant.position.z-player.position.z)<4.5}
@@ -183,8 +188,8 @@ function interact(){if(!playing)return;const now=performance.now();if(now-lastAc
 function useLabel(){if(!S)return'✋<br>AGARRAR';if(shopOpen)return'✖<br>CERRAR';if(nearest(loot,inside?1.6:2))return'✋<br>AGARRAR';if(inside)return'🚪<br>SALIR';if(nearMerchant())return'🛒<br>COMPRAR';if(!inside&&nearest(doors,2.4,d=>d))return'🚪<br>ENTRAR';return'✋<br>AGARRAR'}
 function banner(t,s=5){$('banner').innerHTML=t;$('banner').style.display='block';clearTimeout(banner.h);banner.h=setTimeout(()=>$('banner').style.display='none',s*1000)}
 // Estado
-let lampT=0,camYaw=0,S,zombies=[],crates=[],balls=[],yaw=0,pitch=.25,keys={},playing=false,fireCD=0,msgT=0,dmgCD=0;
-const fresh=()=>({coins:0,ammo:20,looted:[],weap:[0],cur:0,day:1,t:.3,hp:100,food:100,score:0,got:0,x:0,z:7,yaw:Math.PI,nextRun:4,cratesDay:0});
+const BOSSHP=23;let boss=null,bossPend=false;let lampT=0,camYaw=0,S,zombies=[],crates=[],balls=[],yaw=0,pitch=.25,keys={},playing=false,fireCD=0,msgT=0,dmgCD=0;
+const fresh=()=>({coins:0,ammo:20,looted:[],weap:[0],cur:0,day:1,t:.3,hp:100,maxHp:100,lvl:1,xp:0,food:100,score:0,got:0,x:0,z:7,yaw:Math.PI,nextRun:4,cratesDay:0});
 function msg(s,t=3){$('msg').textContent=s;msgT=t}
 function save(){if(!S)return;S.x=inside?inside.ret.x:player.position.x;S.z=inside?inside.ret.z:player.position.z;S.yaw=yaw;S.crates=crates.map(c=>[c.position.x,c.position.z]);S.pick=pickups.map(p=>[p.userData.w,p.position.x,p.position.z]);localStorage.setItem('zsave',JSON.stringify(S))}
 function free(x,z){return !obst.some(o=>Math.hypot(o.x-x,o.z-z)<o.r+.6)&&!rects.some(r=>Math.abs(r.x-x)<r.w&&Math.abs(r.z-z)<r.d)}
@@ -202,7 +207,7 @@ function start(load){zombies.forEach(z=>scene.remove(z));crates.forEach(c=>scene
  const sv=load&&JSON.parse(localStorage.getItem('zsave')||'null');S=sv||fresh();player.position.set(S.x,0,S.z);yaw=S.yaw;
  pickups.forEach(p=>scene.remove(p));pickups.length=0;loot.forEach(l=>scene.remove(l));loot.length=0;if(inside){inside.rm.g.visible=false;inside=null}roomFill.visible=false;$('exitBtn').style.display='none';closeShop();if(sv&&sv.crates)sv.crates.forEach(([x,z])=>addCrate(x,z));else spawnCrates(8);
  if(sv&&sv.pick)sv.pick.forEach(([w,x,z])=>addPickup(w,x,z));else{const pts=hidePts.filter(p=>free(p[0],p[1])).sort(()=>Math.random()-.5);[1,1,2,2,3,4,4,5].forEach((w,i)=>pts[i]&&addPickup(w,pts[i][0],pts[i][1]))}
- S.weap=S.weap||[0];S.coins??=0;S.ammo??=20;S.looted??=[];S.cur=S.cur||0;camYaw=yaw;updW();
+ S.weap=S.weap||[0];S.lvl??=1;S.xp??=0;S.maxHp??=100;S.regen=0;if(boss){scene.remove(boss.userData.bar);boss=null}$('bossHud').style.display='none';spawnFruits();S.coins??=0;S.ammo??=20;S.looted??=[];S.cur=S.cur||0;camYaw=yaw;updW();
  $('start').style.display=$('over').style.display='none';playing=true;msg(sv?'¡Partida cargada!':'¡Sobrevive! Encuentra comida cada 3 días 📦');
  if(!touch)renderer.domElement.requestPointerLock?.()}
 $('bNew').onclick=()=>start(false);$('bCont').onclick=()=>start(true);$('bRe').onclick=()=>start(false);
@@ -230,7 +235,13 @@ function melee(){if(!playing||fireCD>0)return;let W=WEAP[S.cur];if(!W.m){const b
  const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
  for(const z of zombies){if(z.userData.sleep)continue;const dx=z.position.x-player.position.x,dz=z.position.z-player.position.z,d=Math.hypot(dx,dz);
   if(d<W.rng+.5&&(dx*f.x+dz*f.z)/d>.4){hurtZ(z,W.dmg);let nx=z.position.x+dx/d*W.kb,nz=z.position.z+dz/d*W.kb;if(free(nx,nz)){z.position.x=nx;z.position.z=nz}}}}
-function hurtZ(z,n){puff(z.position.clone().setY(1.8),0xffeb3b,8,6,.15,8,.4);z.userData.hp-=n;z.userData.hit=.15;zFlash(z,1);setTimeout(()=>zFlash(z,0),150);if(z.userData.rig&&z.userData.hp>0)z.userData.rig.play('HitRecieve',.1,true,1.5);if(z.userData.hp<=0&&!z.userData.sleep){z.userData.sleep=z.userData.rig?1.4:.6;z.userData.rig?.play('Death',.1,true,1.3);puff(z.position.clone().setY(1.5),0xe1f5fe,14,4,.3,-1,1);S.score++;msg('💤 ¡Zombie dormido!',1);if(Math.random()<.5)addLoot('moneda',z.position.x,z.position.z,null,true)}}
+function hurtZ(z,n){puff(z.position.clone().setY(1.8),0xffeb3b,8,6,.15,8,.4);z.userData.hp-=n;z.userData.hit=.15;zFlash(z,1);setTimeout(()=>zFlash(z,0),150);if(z.userData.rig&&z.userData.hp>0)z.userData.rig.play('HitRecieve',.1,true,1.5);if(z.userData.hp<=0&&!z.userData.sleep){z.userData.sleep=z.userData.rig?1.4:.6;z.userData.rig?.play('Death',.1,true,1.3);puff(z.position.clone().setY(1.5),0xe1f5fe,14,4,.3,-1,1);S.score++;if(z.userData.boss){bossDown(z)}else{msg('💤 ¡Zombie dormido! +10 XP',1);if(Math.random()<.5)addLoot('moneda',z.position.x,z.position.z,null,true)}gainXP(z.userData.boss?120:10)}}
+function spawnBoss(){if(boss||inside)return;makeZ();const z=zombies[zombies.length-1];const a=Math.random()*6.28;let x=player.position.x+Math.cos(a)*22,zz=player.position.z+Math.sin(a)*22;if(free(x,zz)&&Math.hypot(x,zz)>BASE+5&&Math.abs(x)<WORLD&&Math.abs(zz)<WORLD)z.position.set(x,0,zz);
+ const u=z.userData;u.boss=1;u.hp=u.max=BOSSHP;u.sp=2.1;z.scale.setScalar(2.2);z.traverse(o=>{if(o.isMesh&&o.material){o.material=o.material.clone();o.material.color?.lerp(new THREE.Color(0x9c27b0),.55);if(o.material.emissive)o.material.emissive.setHex(0x4a0072)}});
+ const gl=new THREE.PointLight(0xe040fb,LOW?8:14,9,1.5);gl.position.y=1.6;z.add(gl);for(const sx of[-.18,.18]){const ey=new THREE.Mesh(new THREE.SphereGeometry(.07,8,6),new THREE.MeshBasicMaterial({color:0xff1744}));ey.position.set(sx,.98,.18);z.add(ey)}
+ const bar=new THREE.Group();const bg=new THREE.Mesh(new THREE.PlaneGeometry(3.2,.35),new THREE.MeshBasicMaterial({color:0x222222,depthTest:false}));const fg=new THREE.Mesh(new THREE.PlaneGeometry(3,.22),new THREE.MeshBasicMaterial({color:0xff1744,depthTest:false}));fg.position.z=.01;bg.renderOrder=fg.renderOrder=10;bar.add(bg,fg);bar.userData.fg=fg;scene.add(bar);u.bar=bar;boss=z;
+ $('bossHud').style.display='block';banner('👹 ¡CUIDADO! ¡Llegó el MONSTRUO JEFE!<br><small>Tiene 200 de vida más que un zombie y pega fuerte. ¡Duérmelo para ganar muchas 🪙 y una fruta mágica!</small>',7);msg('👹 ¡El monstruo jefe te busca!',3)}
+function bossDown(z){scene.remove(z.userData.bar);boss=null;$('bossHud').style.display='none';S.bossesBeaten=(S.bossesBeaten||0)+1;for(let k=0;k<8;k++)addLoot('moneda',z.position.x+Math.cos(k*.8)*2.6,z.position.z+Math.sin(k*.8)*2.6,null,true);addLoot('fruta',z.position.x+3.4,z.position.z,'boss'+S.day+'_'+S.bossesBeaten);banner('🏆 ¡Dormiste al MONSTRUO JEFE!<br><small>Dejó muchas monedas 🪙 y una fruta mágica ✨ (+120 XP)</small>',6);puff(z.position.clone().setY(2),0xe040fb,40,7,.3,-2,1.5)}
 function shoot(){if(!playing||fireCD>0)return;let W=WEAP[S.cur];if(W.m){const r=S.weap.filter(w=>!WEAP[w].m).pop();if(r===undefined){melee();return}W=WEAP[r]}if(S.ammo<=0){msg('💧 ¡Sin agua! Busca botellas o cómprale al comerciante',1.5);fireCD=.4;return}S.ammo--;fireCD=W.cd;pRig?.play('Gun_Shoot',.08,true,2);const b=new THREE.Mesh(new THREE.SphereGeometry(W.sz,8,6),new THREE.MeshBasicMaterial({color:0x40c4ff}));
  const dir=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));b.position.copy(player.position).add(new THREE.Vector3(0,1.5,0)).addScaledVector(dir,.8);b.userData={v:dir.multiplyScalar(W.sp),life:1.4,dmg:W.dmg};scene.add(b);balls.push(b)}
 // Bucle
@@ -240,7 +251,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
  renderer.render(scene,cam)}
 function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='';
  // tiempo
- const prevDay=S.day;S.t+=dt/DAY;if(S.t>=1){S.t-=1;S.day++;msg('☀️ ¡Día '+S.day+'!');if(S.day%3===0)banner('🧑‍🌾 ¡El COMERCIANTE llegó a la base!<br><small>Solo por hoy: compra comida, vendas, agua y armas con tus 🪙 (pulsa E / COMPRAR)</small>',7);else if(S.day%3===1&&S.day>1){banner('👋 El comerciante se fue.<br><small>Volverá en 3 días</small>',5);if(shopOpen)closeShop()}if(S.day>=S.nextRun){S.nextRun=S.day+3;spawnCrates(6);msg('📦 ¡Aparecieron nuevas cajas de comida! Sal a buscarlas.',5)}}
+ const prevDay=S.day;S.t+=dt/DAY;if(S.t>=1){S.t-=1;S.day++;msg('☀️ ¡Día '+S.day+'!');spawnFruits();if(S.day%5===0){bossPend=true;banner('⚠️ Esta NOCHE vendrá el MONSTRUO JEFE 👹<br><small>¡Prepárate con tus mejores armas!</small>',6)}else if(S.day%3===0)banner('🧑‍🌾 ¡El COMERCIANTE llegó a la base!<br><small>Solo por hoy: compra comida, vendas, agua y armas con tus 🪙 (pulsa E / COMPRAR)</small>',7);else if(S.day%3===1&&S.day>1){banner('👋 El comerciante se fue.<br><small>Volverá en 3 días</small>',5);if(shopOpen)closeShop()}if(S.day>=S.nextRun){S.nextRun=S.day+3;spawnCrates(6);msg('📦 ¡Aparecieron nuevas cajas de comida! Sal a buscarlas.',5)}}
  const ang=S.t*Math.PI*2-Math.PI/2,sh=Math.sin(ang),light=Math.max(0,Math.min(1,sh*2+.5));
  sun.position.set(player.position.x+Math.cos(ang)*50,Math.max(5,sh*60),player.position.z+20);sun.target.position.copy(player.position);
  const tint=Math.max(0,1-Math.abs(sh)*3.2);const cp0=player.position;
@@ -254,7 +265,9 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
  const night=light<.4;$('tod').textContent=night?'🌙 Noche':'☀️ Día';
  // comida: se vacía en 3 días
  S.food=Math.max(0,S.food-dt*100/(3*DAY));const inBase=Math.hypot(player.position.x,player.position.z)<BASE;
- if(S.food<=0){S.hp-=dt*4;if(msgT<=0)msg('😫 ¡Tienes hambre! Busca cajas de comida 📦',2)}else if(inBase&&S.hp<100)S.hp=Math.min(100,S.hp+dt*3);
+ if(bossPend&&night&&!inside&&!boss){bossPend=false;spawnBoss()}if(S.regen>0){const g=Math.min(S.regen,dt*15);S.regen-=g;S.hp=Math.min(S.maxHp,S.hp+g);if(Math.random()<dt*14)puff(player.position.clone().add(new THREE.Vector3(Math.random()-.5,1+Math.random(),Math.random()-.5)),[0xff80ff,0xffff8d,0x84ffff][Math.floor(Math.random()*3)],2,2,.12,-3,.8)}
+ for(let i=loot.length-1;i>=0;i--){const l=loot[i],f=l.userData.fruit;if(f){l.userData.ph+=dt*2;f.position.y=1.1+Math.sin(l.userData.ph)*.2;f.rotation.y+=dt*1.5}if((f||l.userData.auto)&&Math.hypot(l.position.x-player.position.x,l.position.z-player.position.z)<1.3)take(l)}
+ if(S.food<=0){S.hp-=dt*4;if(msgT<=0)msg('😫 ¡Tienes hambre! Busca cajas de comida 📦',2)}else if(inBase&&S.hp<S.maxHp)S.hp=Math.min(S.maxHp,S.hp+dt*3);
  // movimiento
  let mx=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0)+jv.x,mz=(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0)+jv.y;
  if(keys.KeyQ||keys.KeyA)yaw+=dt*2.2;if(keys.KeyD)yaw-=dt*2.2;if(keys.KeyW)pitch=Math.max(-.3,pitch-dt);if(keys.KeyS)pitch=Math.min(1.1,pitch+dt);
@@ -283,19 +296,20 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
   const dx=player.position.x-z.position.x,dz=player.position.z-z.position.z,d=Math.hypot(dx,dz);z.rotation.y=Math.atan2(dx,dz);
   if(d>1.2){let nx=z.position.x+dx/d*u.sp*dt,nz=z.position.z+dz/d*u.sp*dt;if(Math.hypot(nx,nz)<BASE+1){const a=Math.atan2(z.position.z,z.position.x)+dt*.5;nx=Math.cos(a)*(BASE+1);nz=Math.sin(a)*(BASE+1)}
    if(free(nx,nz)){z.position.x=nx;z.position.z=nz}else{z.position.x+=dz/d*u.sp*dt;z.position.z-=dx/d*u.sp*dt}}
-  else if(dmgCD<=0){S.hp-=12;dmgCD=.8;msg('¡Ay! 🧟');u.rig?.play('Attack',.1,true,1.4);biteT=.6;pRig?.play('HitRecieve',.1,true,1.5);puff(player.position.clone().setY(1.6),0xff80ab,6,3,.15,2,.5)}
+  else if(dmgCD<=0){S.hp-=u.boss?25:12;if(u.boss)msg('👹 ¡GRRR! ¡El jefe pega fuerte!',1.5);else dmgCD=.8;msg('¡Ay! 🧟');u.rig?.play('Attack',.1,true,1.4);biteT=.6;pRig?.play('HitRecieve',.1,true,1.5);puff(player.position.clone().setY(1.6),0xff80ab,6,3,.15,2,.5)}
   if(u.rig&&!(u.rig.lock>0)){u.rig.play(d>1.2?(u.sp>2.6?'Run':'Walk'):'Idle',.25,false,d>1.2?u.sp/1.8:1)}if(u.rig&&u.rig.lock>0)u.rig.lock-=dt;
   u.wt+=dt*u.sp*2.2;const [a1,a2,l1,l2]=u.limbs;l1.rotation.x=Math.sin(u.wt)*.6;l2.rotation.x=-l1.rotation.x;a1.rotation.x=-1.4+Math.sin(u.wt)*.25;a2.rotation.x=-1.4-Math.sin(u.wt)*.25;z.rotation.z=Math.sin(u.wt*.5)*.06;if(u.hit>0){u.hit-=dt;z.children[1].material.color.set(u.hit>0?0xffffff:0x7cb342)}
-  if(!night&&d>70&&Math.random()<dt*.2){scene.remove(z);zombies.splice(i,1)}}
+  if(u.bar){u.bar.position.set(z.position.x,5.6,z.position.z);u.bar.quaternion.copy(cam.quaternion);const p=Math.max(0,u.hp/u.max);u.bar.userData.fg.scale.x=Math.max(.001,p);u.bar.userData.fg.position.x=-1.5*(1-p);$('bossBar').style.width=p*100+'%';$('bossTxt').textContent=Math.ceil(u.hp*10)}
+  if(!u.boss&&!night&&d>70&&Math.random()<dt*.2){scene.remove(z);zombies.splice(i,1)}}
  // bolas
  for(let i=balls.length-1;i>=0;i--){const b=balls[i];b.position.addScaledVector(b.userData.v,dt);b.userData.life-=dt;let hit=false;
   for(const z of zombies)if(!z.userData.sleep&&Math.hypot(z.position.x-b.position.x,z.position.z-b.position.z)<.9){hurtZ(z,b.userData.dmg);hit=true;break}
   if(hit||b.userData.life<=0||!free(b.position.x,b.position.z)){puff(b.position,0x4fc3f7,10,5,.14,12,.5);scene.remove(b);balls.splice(i,1)}}
  // HUD
- $('day').textContent=S.day;$('hp').style.width=Math.max(0,S.hp)+'%';$('fd').style.width=S.food+'%';$('run3').textContent=Math.max(0,S.nextRun-S.day);$('score').textContent=S.score;$('crates').textContent=crates.length;
+ $('day').textContent=S.day;$('hp').style.width=Math.max(0,S.hp/S.maxHp*100)+'%';$('hpTxt').textContent=Math.max(0,Math.ceil(S.hp))+'/'+S.maxHp;$('lvl').textContent=S.lvl;$('xp').style.width=Math.min(100,S.xp/(S.lvl*30)*100)+'%';$('fd').style.width=S.food+'%';$('run3').textContent=Math.max(0,S.nextRun-S.day);$('score').textContent=S.score;$('crates').textContent=crates.length;
  if((saveT+=dt)>3){saveT=0;save()}
  if(S.hp<=0)gameOver(S.food<=0?'Te quedaste sin comida 🍎':'¡Los zombies te atraparon! 🧟')}
 addEventListener('visibilitychange',save);
 loop();window.__ok=true;
 
-window.__g={yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
+window.__g={spawnBoss,boss:()=>boss,gainXP,spawnFruits,take,yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};

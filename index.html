@@ -23,23 +23,34 @@ button{font-size:20px;padding:12px 26px;border-radius:14px;border:0;background:#
 #sw{right:110px;bottom:110px;width:60px;height:60px;background:rgba(160,100,255,.65);font-size:11px}
 #run{right:120px;bottom:20px;width:65px;height:65px;background:rgba(80,160,255,.6);font-size:12px}
 #cross{position:fixed;left:50%;top:45%;width:14px;height:14px;margin:-7px;border:2px solid #fff;border-radius:50%;z-index:4;pointer-events:none}
-@media (max-height:500px){#shop{justify-content:flex-start;overflow-y:auto}#shop h1{font-size:22px;margin:2px}#shop p{margin:2px}.sbtn{padding:7px 12px;font-size:15px}#shopList{gap:6px}#banner{font-size:17px;padding:8px 16px;top:80px}#banner small{font-size:12px}}</style></head><body>
+@media (max-height:500px){#start{justify-content:flex-start;overflow-y:auto;touch-action:pan-y}#start h1{font-size:24px;margin:2px}#start p{font-size:13px;margin:4px}#shop{justify-content:flex-start;overflow-y:auto}#shop h1{font-size:22px;margin:2px}#shop p{margin:2px}.sbtn{padding:7px 12px;font-size:15px}#shopList{gap:6px}#banner{font-size:17px;padding:8px 16px;top:80px}#banner small{font-size:12px}}#bossHud{display:none;position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(74,0,114,.85);border:2px solid #e040fb;padding:6px 14px;border-radius:12px;font-weight:bold;z-index:5;pointer-events:none;text-align:center}#bossHud .bar{width:220px;height:12px}#bossBar{background:linear-gradient(90deg,#ff1744,#e040fb);width:100%}#bInstall{background:#1e88e5}#iosTip{display:none;background:#fff3e0;color:#3e2723;padding:10px 14px;border-radius:12px;max-width:420px;font-weight:bold}
+@media (max-width:700px){#bossHud{bottom:160px}}</style></head><body>
 <div id="hud">
 <div class="p">📅 Día <span id="day">1</span> <span id="tod"></span></div>
-<div class="p">❤️ Salud<div class="bar"><i id="hp" style="background:#e53935;width:100%"></i></div></div>
+<div class="p">⭐ Nivel <span id="lvl">1</span><div class="bar" style="height:6px"><i id="xp" style="background:#ffeb3b;width:0%"></i></div></div><div class="p">❤️ Salud <span id="hpTxt">100/100</span><div class="bar"><i id="hp" style="background:#e53935;width:100%"></i></div></div>
 <div class="p">🍎 Comida<div class="bar"><i id="fd" style="background:#ffb300;width:100%"></i></div></div>
 <div class="p">🚶 Salir por comida en: <span id="run3">3</span> días</div>
 <div class="p">Arma: <span id="wpn">👊 Puños</span></div><div class="p">🪙 <span id="coins">0</span> · 💧 <span id="ammo">20</span></div><div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
 </div>
-<div id="msg"></div><div id="cross"></div>
+<div id="bossHud">👹 MONSTRUO JEFE ❤️ <span id="bossTxt">230</span><div class="bar"><i id="bossBar"></i></div></div><div id="msg"></div><div id="cross"></div>
 <div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div><div id="hit">👊<br>GOLPEAR</div><div id="sw">🔄<br>ARMA</div><div id="use">✋<br>AGARRAR</div><div id="banner"></div><button id="exitBtn">🚪 SALIR del edificio</button>
 <div id="shop" class="scr" style="display:none"><h1>🧑‍🌾 Tienda del Comerciante</h1><p>Tienes <b id="shopCoins">0</b> 🪙 monedas</p><div id="shopList"></div><button id="shopX">Salir ✖ (E)</button></div>
 <div id="start" class="scr"><h1>🧟 Sobrevive a los Zombies</h1>
 <p>Vives en una casa segura 🏠 en medio de una ciudad abandonada. De noche vienen más zombies. Empiezas solo con tus puños 👊: busca <b>armas escondidas</b> (bate, tubo, palo-machete, pistola de agua, lanzador gigante) junto a los edificios y detrás de los autos. ¡Dales golpes o mójalos para mandarlos a dormir!<br>Cada 3 días se acaba tu comida: sal a buscar las <b>cajas de comida 📦</b> por el mapa. Dentro de la cerca los zombies no entran y recuperas salud.</p>
 <p><b>PC:</b> Flechas ⬆️⬇️⬅️➡️ mover (la cámara te sigue) · A/D girar la cámara · W/S subir/bajar la cámara · Ratón también gira · Clic/Espacio atacar con el arma · F golpear · 1-6 o R cambiar arma · Shift correr · E agarrar / entrar / comprar · X salir del edificio<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · GOLPEAR, DISPARAR, ARMA y CORRER</p>
-<button id="bCont" style="display:none">Continuar</button><button id="bNew">Nuevo juego</button></div>
+<button id="bCont" style="display:none">Continuar</button><button id="bNew">Nuevo juego</button><button id="bInstall" style="display:none">📲 Instalar juego</button><div id="iosTip">📲 Para instalar en iPhone/iPad: toca <b>Compartir</b> ⬆️ y luego <b>Agregar a pantalla de inicio</b> ➕</div></div>
 <div id="over" class="scr" style="display:none"><h1>😵 ¡Fin del juego!</h1><p id="overTxt"></p><button id="bRe">Jugar otra vez</button></div>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 <script type="module" src="game.js"></script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
+<script>
+(function(){var b=document.getElementById('bInstall'),tip=document.getElementById('iosTip'),dp=null;
+var standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(!standalone&&ios){b.style.display='';b.onclick=function(){tip.style.display=tip.style.display==='block'?'none':'block'}}
+addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;if(!standalone){b.style.display='';b.onclick=function(){dp.prompt();dp.userChoice.then(function(){dp=null;b.style.display='none'})}}});
+addEventListener('appinstalled',function(){b.style.display='none';tip.style.display='none'});
+if('serviceWorker' in navigator){var had=!!navigator.serviceWorker.controller,re=false;
+navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){r.update()});
+navigator.serviceWorker.addEventListener('controllerchange',function(){if(had&&!re){re=true;location.reload()}})}})();
+</script>
 <script>document.getElementById("shopX").onclick=()=>window.__g&&window.__g.interact()</script></body></html>
