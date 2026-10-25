@@ -15,25 +15,30 @@ button{font-size:20px;padding:12px 26px;border-radius:14px;border:0;background:#
 #joy{position:fixed;left:20px;bottom:20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.4);z-index:6;display:none}
 #knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.6)}
 #fire,#run{position:fixed;right:20px;bottom:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,80,80,.6);z-index:6;display:none;font-size:15px;align-items:center;justify-content:center;font-weight:bold}
+#use{position:fixed;right:210px;bottom:24px;width:76px;height:76px;border-radius:50%;background:rgba(76,175,80,.75);z-index:6;display:none;font-size:12px;align-items:center;justify-content:center;font-weight:bold;text-align:center}
+#banner{display:none;position:fixed;top:110px;left:50%;transform:translateX(-50%);background:linear-gradient(#ffca28,#ff8f00);color:#3e2723;padding:14px 26px;border-radius:16px;font-size:24px;font-weight:bold;text-align:center;z-index:8;box-shadow:0 6px 18px #0008;border:3px solid #fff}#banner small{font-size:15px}
+#shopList{display:flex;flex-direction:column;gap:10px;width:min(440px,92vw);margin:8px}.sbtn{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:18px;border-radius:12px;border:0;background:#fff3e0;color:#3e2723;cursor:pointer}.sbtn:disabled{opacity:.45}.sbtn b{background:#ffca28;padding:4px 10px;border-radius:8px}
 #hit,#sw{position:fixed;right:20px;bottom:130px;width:80px;height:80px;border-radius:50%;background:rgba(255,170,0,.65);z-index:6;display:none;font-size:13px;align-items:center;justify-content:center;font-weight:bold;text-align:center}
 #sw{right:110px;bottom:110px;width:60px;height:60px;background:rgba(160,100,255,.65);font-size:11px}
 #run{right:120px;bottom:20px;width:65px;height:65px;background:rgba(80,160,255,.6);font-size:12px}
 #cross{position:fixed;left:50%;top:45%;width:14px;height:14px;margin:-7px;border:2px solid #fff;border-radius:50%;z-index:4;pointer-events:none}
-</style></head><body>
+@media (max-height:500px){#shop{justify-content:flex-start;overflow-y:auto}#shop h1{font-size:22px;margin:2px}#shop p{margin:2px}.sbtn{padding:7px 12px;font-size:15px}#shopList{gap:6px}#banner{font-size:17px;padding:8px 16px;top:80px}#banner small{font-size:12px}}</style></head><body>
 <div id="hud">
 <div class="p">📅 Día <span id="day">1</span> <span id="tod"></span></div>
 <div class="p">❤️ Salud<div class="bar"><i id="hp" style="background:#e53935;width:100%"></i></div></div>
 <div class="p">🍎 Comida<div class="bar"><i id="fd" style="background:#ffb300;width:100%"></i></div></div>
 <div class="p">🚶 Salir por comida en: <span id="run3">3</span> días</div>
-<div class="p">Arma: <span id="wpn">👊 Puños</span></div><div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
+<div class="p">Arma: <span id="wpn">👊 Puños</span></div><div class="p">🪙 <span id="coins">0</span> · 💧 <span id="ammo">20</span></div><div class="p">⭐ <span id="score">0</span> | 📦 <span id="crates">0</span></div>
 </div>
 <div id="msg"></div><div id="cross"></div>
-<div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div><div id="hit">👊<br>GOLPEAR</div><div id="sw">🔄<br>ARMA</div>
+<div id="joy"><div id="knob"></div></div><div id="fire">💦<br>DISPARAR</div><div id="run">CORRER</div><div id="hit">👊<br>GOLPEAR</div><div id="sw">🔄<br>ARMA</div><div id="use">✋<br>AGARRAR</div><div id="banner"></div>
+<div id="shop" class="scr" style="display:none"><h1>🧑‍🌾 Tienda del Comerciante</h1><p>Tienes <b id="shopCoins">0</b> 🪙 monedas</p><div id="shopList"></div><button id="shopX">Salir ✖ (E)</button></div>
 <div id="start" class="scr"><h1>🧟 Sobrevive a los Zombies</h1>
 <p>Vives en una casa segura 🏠 en medio de una ciudad abandonada. De noche vienen más zombies. Empiezas solo con tus puños 👊: busca <b>armas escondidas</b> (bate, tubo, palo-machete, pistola de agua, lanzador gigante) junto a los edificios y detrás de los autos. ¡Dales golpes o mójalos para mandarlos a dormir!<br>Cada 3 días se acaba tu comida: sal a buscar las <b>cajas de comida 📦</b> por el mapa. Dentro de la cerca los zombies no entran y recuperas salud.</p>
-<p><b>PC:</b> Flechas ⬆️⬇️⬅️➡️ mover (la cámara te sigue) · A/D girar la cámara · W/S subir/bajar la cámara · Ratón también gira · Clic/Espacio atacar con el arma · F golpear · 1-6 o R cambiar arma · Shift correr<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · GOLPEAR, DISPARAR, ARMA y CORRER</p>
+<p><b>PC:</b> Flechas ⬆️⬇️⬅️➡️ mover (la cámara te sigue) · A/D girar la cámara · W/S subir/bajar la cámara · Ratón también gira · Clic/Espacio atacar con el arma · F golpear · 1-6 o R cambiar arma · Shift correr · E agarrar / entrar / comprar<br><b>Móvil:</b> joystick izquierdo · arrastra a la derecha para mirar · GOLPEAR, DISPARAR, ARMA y CORRER</p>
 <button id="bCont" style="display:none">Continuar</button><button id="bNew">Nuevo juego</button></div>
 <div id="over" class="scr" style="display:none"><h1>😵 ¡Fin del juego!</h1><p id="overTxt"></p><button id="bRe">Jugar otra vez</button></div>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
 <script type="module" src="game.js"></script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
-</body></html>
+<script>document.getElementById("shopX").onclick=()=>window.__g&&window.__g.interact()</script></body></html>
