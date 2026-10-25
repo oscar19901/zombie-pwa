@@ -153,8 +153,9 @@ function buildRoom(i){const RX=1000+i*40,W=14,D=10,r=srnd(i*97+13);const g=new T
  return {g,RX,W,D,items,L}}
 function enter(dr){const rm=rooms[dr.id]||(rooms[dr.id]=buildRoom(dr.id));rm.g.visible=true;inside={rm,ret:{x:dr.x,z:dr.z},door:dr};
  rm.items.forEach(([t,x,z,id])=>{if(!S.looted.includes(id)&&!loot.some(l=>l.userData.id==id))addLoot(t,x,z,id)});
- player.position.set(rm.RX,0,rm.D/2-1.6);yaw=0;camYaw=0;cam.position.set(rm.RX,4,rm.D/2+3);msg('🏚️ Entraste a un edificio. Busca cosas y pulsa E / AGARRAR. Sal por la puerta verde 🚪',4)}
-function leave(){const dr=inside.door;inside.rm.g.visible=false;loot.filter(l=>l.position.x>900).forEach(l=>{scene.remove(l);loot.splice(loot.indexOf(l),1)});inside=null;player.position.set(dr.x,0,dr.z+.4);yaw=0;camYaw=0;msg('🌆 De vuelta en la ciudad',2)}
+ player.position.set(rm.RX,0,rm.D/2-2.6);yaw=0;camYaw=0;cam.position.set(rm.RX,4,rm.D/2+3);roomFill.visible=true;$('exitBtn').style.display='block';document.exitPointerLock?.();doorCD=1;msg('🏚️ Entraste. Agarra cosas con E. Para salir: botón 🚪 SALIR, tecla X, o camina a la puerta verde',4)}
+function leave(){if(!inside)return;const dr=inside.door;inside.rm.g.visible=false;roomFill.visible=false;$('exitBtn').style.display='none';doorCD=1.5;loot.filter(l=>l.position.x>900).forEach(l=>{scene.remove(l);loot.splice(loot.indexOf(l),1)});inside=null;let ez=dr.z+2.2;for(let k=0;k<6&&!free(dr.x,ez);k++)ez+=1;player.position.set(dr.x,0,ez);yaw=Math.PI;camYaw=Math.PI;cam.position.set(dr.x,4,ez-3);msg('🌆 De vuelta en la ciudad',2)}
+const roomFill=new THREE.PointLight(0xfff2d8,LOW?30:45,16,1.4);roomFill.visible=false;scene.add(roomFill);let doorCD=0,lastAct=0;
 function take(l){const t=l.userData.t;scene.remove(l);loot.splice(loot.indexOf(l),1);if(l.userData.id)S.looted.push(l.userData.id);puff(l.position.clone().setY(.8),0xffeb3b,10,4,.15,6,.5);let txt='';
  if(t=='lata'){S.food=Math.min(100,S.food+25);txt='🥫 ¡Lata de comida! +25 comida'}
  else if(t=='moneda'){const n=l.userData.auto?1+Math.floor(Math.random()*3):3+Math.floor(Math.random()*4);S.coins+=n;txt='🪙 +'+n+' monedas'}
@@ -175,11 +176,11 @@ function buy(k){const it=SHOP[k];if(S.coins<it.p){msg('No tienes suficientes mon
  updW();msg('🛒 ¡Compraste '+it.i+'! Gracias, vuelve pronto.',2);renderShop()}
 function nearest(arr,max,f=o=>o.position){let b=null,bd=max;for(const o of arr){const p=f(o),d=Math.hypot(p.x-player.position.x,p.z-player.position.z);if(d<bd){bd=d;b=o}}return b}
 function nearMerchant(){return merchantHere()&&!inside&&Math.hypot(merchant.position.x-player.position.x,merchant.position.z-player.position.z)<4.5}
-function interact(){if(!playing)return;if(shopOpen){closeShop();return}
- const l=nearest(loot,2);if(l){take(l);return}
- if(inside){if(Math.hypot(player.position.x-inside.rm.RX,player.position.z-(inside.rm.D/2-1))<2.2)leave();else msg('Acércate a la puerta verde para salir 🚪',1.5);return}
+function interact(){if(!playing)return;const now=performance.now();if(now-lastAct<350)return;lastAct=now;if(shopOpen){closeShop();return}
+ const l=nearest(loot,inside?1.6:2);if(l){take(l);return}
+ if(inside){leave();return}
  if(nearMerchant()){openShop();return}const dr=nearest(doors,2.4,d=>d);if(dr){enter(dr);return}msg('No hay nada cerca para agarrar',1.2)}
-function useLabel(){if(!S)return'✋<br>AGARRAR';if(shopOpen)return'✖<br>CERRAR';if(nearest(loot,2))return'✋<br>AGARRAR';if(inside&&Math.hypot(player.position.x-inside.rm.RX,player.position.z-(inside.rm.D/2-1))<2.2)return'🚪<br>SALIR';if(nearMerchant())return'🛒<br>COMPRAR';if(!inside&&nearest(doors,2.4,d=>d))return'🚪<br>ENTRAR';return'✋<br>AGARRAR'}
+function useLabel(){if(!S)return'✋<br>AGARRAR';if(shopOpen)return'✖<br>CERRAR';if(nearest(loot,inside?1.6:2))return'✋<br>AGARRAR';if(inside)return'🚪<br>SALIR';if(nearMerchant())return'🛒<br>COMPRAR';if(!inside&&nearest(doors,2.4,d=>d))return'🚪<br>ENTRAR';return'✋<br>AGARRAR'}
 function banner(t,s=5){$('banner').innerHTML=t;$('banner').style.display='block';clearTimeout(banner.h);banner.h=setTimeout(()=>$('banner').style.display='none',s*1000)}
 // Estado
 let lampT=0,camYaw=0,S,zombies=[],crates=[],balls=[],yaw=0,pitch=.25,keys={},playing=false,fireCD=0,msgT=0,dmgCD=0;
@@ -199,7 +200,7 @@ function makeZ(){const g=new THREE.Group();const c=[0x7cb342,0x9ccc65,0x689f38][
  g.position.set(x,0,z);g.userData={limbs:g.userData.limbs,wt:Math.random()*6,hp:3,sp:1.6+Math.random()*1.2+S.day*.1,hit:0};scene.add(g);zombies.push(g);attachZ(g)}
 function start(load){zombies.forEach(z=>scene.remove(z));crates.forEach(c=>scene.remove(c));balls.forEach(b=>scene.remove(b));zombies=[];crates=[];balls=[];
  const sv=load&&JSON.parse(localStorage.getItem('zsave')||'null');S=sv||fresh();player.position.set(S.x,0,S.z);yaw=S.yaw;
- pickups.forEach(p=>scene.remove(p));pickups.length=0;loot.forEach(l=>scene.remove(l));loot.length=0;if(inside){inside.rm.g.visible=false;inside=null}closeShop();if(sv&&sv.crates)sv.crates.forEach(([x,z])=>addCrate(x,z));else spawnCrates(8);
+ pickups.forEach(p=>scene.remove(p));pickups.length=0;loot.forEach(l=>scene.remove(l));loot.length=0;if(inside){inside.rm.g.visible=false;inside=null}roomFill.visible=false;$('exitBtn').style.display='none';closeShop();if(sv&&sv.crates)sv.crates.forEach(([x,z])=>addCrate(x,z));else spawnCrates(8);
  if(sv&&sv.pick)sv.pick.forEach(([w,x,z])=>addPickup(w,x,z));else{const pts=hidePts.filter(p=>free(p[0],p[1])).sort(()=>Math.random()-.5);[1,1,2,2,3,4,4,5].forEach((w,i)=>pts[i]&&addPickup(w,pts[i][0],pts[i][1]))}
  S.weap=S.weap||[0];S.coins??=0;S.ammo??=20;S.looted??=[];S.cur=S.cur||0;camYaw=yaw;updW();
  $('start').style.display=$('over').style.display='none';playing=true;msg(sv?'¡Partida cargada!':'¡Sobrevive! Encuentra comida cada 3 días 📦');
@@ -210,13 +211,13 @@ function gameOver(why){playing=false;pRig?.play('Death',.1,true);localStorage.re
  $('overTxt').innerHTML=why+'<br>Sobreviviste <b>'+S.day+'</b> días · ⭐ '+S.score+' zombies dormidos · 📦 '+S.got+' cajas';$('over').style.display='flex'}
 // Controles
 const touch='ontouchstart' in window;if(touch){$('joy').style.display='block';$('fire').style.display=$('run').style.display=$('hit').style.display=$('sw').style.display=$('use').style.display='flex';$('cross').style.display='none'}
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code.startsWith('Arrow'))e.preventDefault();if(e.code=='Space'){attack();e.preventDefault()}if(e.code=='KeyF')melee();if(e.code=='KeyE'&&!e.repeat)interact();if(e.code=='Escape'&&shopOpen)closeShop();if(e.code=='KeyR'||e.code=='Tab'){nextW();e.preventDefault()}
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code.startsWith('Arrow'))e.preventDefault();if(e.code=='Space'){attack();e.preventDefault()}if(e.code=='KeyF')melee();if(e.code=='KeyE'&&!e.repeat)interact();if(e.code=='KeyX'&&inside)leave();if(e.code=='Escape'&&shopOpen)closeShop();if(e.code=='KeyR'||e.code=='Tab'){nextW();e.preventDefault()}
  const n=+e.key;if(n>=1&&n<=6&&S&&S.weap.includes(n-1)){S.cur=n-1;updW()}});addEventListener('keyup',e=>keys[e.code]=0);
 renderer.domElement.addEventListener('mousedown',()=>{if(!playing)return;if(document.pointerLockElement)attack();else renderer.domElement.requestPointerLock?.()});
 addEventListener('mousemove',e=>{if(document.pointerLockElement){yaw-=e.movementX*.003;pitch=Math.max(-.3,Math.min(1.1,pitch+e.movementY*.003))}});
 let jv={x:0,y:0},jid=null,lid=null,lx=0,ly=0,runT=false;
 $('joy').addEventListener('touchstart',e=>{jid=e.changedTouches[0].identifier;e.preventDefault()});
-$('fire').addEventListener('touchstart',e=>{shoot();e.preventDefault()});$('hit').addEventListener('touchstart',e=>{melee();e.preventDefault()});$('sw').addEventListener('touchstart',e=>{nextW();e.preventDefault()});$('use').addEventListener('touchstart',e=>{interact();e.preventDefault()});$('use').addEventListener('click',()=>interact());
+$('fire').addEventListener('touchstart',e=>{shoot();e.preventDefault()});$('hit').addEventListener('touchstart',e=>{melee();e.preventDefault()});$('sw').addEventListener('touchstart',e=>{nextW();e.preventDefault()});$('use').addEventListener('touchstart',e=>{interact();e.preventDefault()});$('use').addEventListener('click',()=>interact());const xb=$('exitBtn');xb.addEventListener('touchstart',e=>{leave();e.preventDefault()});xb.addEventListener('click',()=>leave());
 $('run').addEventListener('touchstart',e=>{runT=true;e.preventDefault()});$('run').addEventListener('touchend',()=>runT=false);
 addEventListener('touchstart',e=>{for(const t of e.changedTouches)if(t.identifier!==jid&&t.clientX>innerWidth/2&&lid===null&&e.target===renderer.domElement){lid=t.identifier;lx=t.clientX;ly=t.clientY}});
 addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===jid){const r=$('joy').getBoundingClientRect();let dx=t.clientX-r.left-65,dy=t.clientY-r.top-65,d=Math.hypot(dx,dy);if(d>50){dx*=50/d;dy*=50/d}jv={x:dx/50,y:dy/50};$('knob').style.transform=`translate(${dx}px,${dy}px)`}
@@ -259,14 +260,14 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
  if(keys.KeyQ||keys.KeyA)yaw+=dt*2.2;if(keys.KeyD)yaw-=dt*2.2;if(keys.KeyW)pitch=Math.max(-.3,pitch-dt);if(keys.KeyS)pitch=Math.min(1.1,pitch+dt);
  const sp=(keys.ShiftLeft||runT?9:5.5)*dt,l=Math.hypot(mx,mz);if(l>.1){if(l>1){mx/=l;mz/=l}
   const s=Math.sin(yaw),c=Math.cos(yaw);let nx=player.position.x+(mx*c+mz*s)*sp,nz=player.position.z+(-mx*s+mz*c)*sp;
-  if(free(nx,player.position.z))player.position.x=Math.max(-WORLD,Math.min(WORLD,nx));if(free(player.position.x,nz))player.position.z=Math.max(-WORLD,Math.min(WORLD,nz));
+  const LIM=inside?1e5:WORLD;if(free(nx,player.position.z))player.position.x=Math.max(-LIM,Math.min(LIM,nx));if(free(player.position.x,nz))player.position.z=Math.max(-LIM,Math.min(LIM,nz));
   walkT+=sp*1.7;legL.rotation.x=Math.sin(walkT)*.7;legR.rotation.x=-legL.rotation.x;armL.rotation.x=-legL.rotation.x*.8;if(Math.random()<dt*(sp>.1?14:6))puff(player.position.clone().setY(.1),0xb0a48a,1,1.5,.18,2,.5)}else{legL.rotation.x*=.8;legR.rotation.x*=.8;armL.rotation.x*=.8}
  if(pRig){if(pRig.lock>0)pRig.lock-=dt;else pRig.play(l>.1?(sp>6*dt?'Run':'Walk'):'Idle',.2,false,l>.1?1.2:1)}
  if(biteT>0){biteT-=dt;bite.visible=true;bite.position.copy(player.position).add(_v.set(0,3.1,0));bite.scale.setScalar(1.6+Math.sin(biteT*30)*.15).setY(.8)}else bite.visible=false;
  if((merchantT-=dt)<=0&&merchantHere()&&!inside&&merchant.position.distanceTo(player.position)<4){merchantT=8;merchant.userData.rig?.play('Wave',.2,true);msg('🧑‍🌾 Comerciante: ¡Hola! Pulsa E / COMPRAR para ver mi tienda 🛒',4)}
  if(merchant.userData.rig&&merchant.userData.rig.lock>0){merchant.userData.rig.lock-=dt;if(merchant.userData.rig.lock<=0)merchant.userData.rig.play('Idle')}
  const mh=merchantHere();merchant.visible=mh;mObst.r=mh?1.2:0;
- if(inside){const rm=inside.rm;player.position.x=Math.max(rm.RX-rm.W/2+.6,Math.min(rm.RX+rm.W/2-.6,player.position.x));player.position.z=Math.max(-rm.D/2+.9,Math.min(rm.D/2-.6,player.position.z))}
+ doorCD-=dt;if(inside){const rm=inside.rm;roomFill.position.set(player.position.x+Math.sin(camYaw)*2.5,3.2,player.position.z+Math.cos(camYaw)*2.5);if(doorCD<=0&&player.position.z>rm.D/2-1.1&&Math.abs(player.position.x-rm.RX)<2.2){leave()}else{player.position.x=Math.max(rm.RX-rm.W/2+.6,Math.min(rm.RX+rm.W/2-.6,player.position.x));player.position.z=Math.max(-rm.D/2+.9,Math.min(rm.D/2-.6,player.position.z))}}
  for(let i=loot.length-1;i>=0;i--){const lo=loot[i];lo.children[0].rotation.y+=dt*2;lo.children[0].position.y=.7+Math.sin(performance.now()/300+i)*.1;if(lo.userData.auto&&lo.position.distanceTo(player.position)<1.3)take(lo)}
  doors.forEach(d=>d.ring.material.opacity=.5+Math.sin(performance.now()/250)*.3);
  if((hintT-=dt)<=0){hintT=.3;const ul=useLabel();$('use').innerHTML=ul;if(msgT<=0&&!ul.includes('AGARRAR')||msgT<=0&&nearest(loot,2))msg('Pulsa E: '+ul.replace('<br>',' '),.5)}
@@ -297,4 +298,4 @@ function update(dt){fireCD-=dt;dmgCD-=dt;if((msgT-=dt)<=0)$('msg').textContent='
 addEventListener('visibilitychange',save);
 loop();window.__ok=true;
 
-window.__g={S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
+window.__g={yaw:()=>yaw,save,S:()=>S,doors,enter,leave,interact,openShop,buy,player,makeZ,zombies:()=>zombies,loot,merchant,setYaw:v=>{yaw=v;camYaw=v},inside:()=>inside};
