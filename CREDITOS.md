@@ -33,3 +33,7 @@ Descargados el 25-oct-2026 desde https://poly.pizza (modelos GLB con texturas in
 - **Kenney** (https://kenney.nl), CC0 1.0: models/bioma/casa.glb, casa2.glb, casa3.glb (casas de la colonia).
 - **"Football helmet" de Poly by Google**, licencia CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/), vía https://poly.pizza: models/armadura/casco.glb. Se usa como casco de armadura; los colores se pasaron a colores de vértice.
 - El juego convierte los colores de los props en colores de vértice y fusiona cada prop en una sola geometría.
+
+## v18 Multijugador
+- PeerJS 1.5.5 (lib/peerjs.min.js) — MIT, Michelle Bu y Eric Zhang. https://peerjs.com
+- Servidor de señal gratuito de PeerJS y STUN público de Google.
