@@ -37,3 +37,9 @@ Descargados el 25-oct-2026 desde https://poly.pizza (modelos GLB con texturas in
 ## v18 Multijugador
 - PeerJS 1.5.5 (lib/peerjs.min.js) — MIT, Michelle Bu y Eric Zhang. https://peerjs.com
 - Servidor de señal gratuito de PeerJS y STUN público de Google.
+
+## Novedades v19
+- **Personajes extra** (Obrero, SWAT, Astronauta, Rey, Chico casual, Ejecutivo): *Ultimate Animated Character Pack* de **Quaternius** — CC0 (dominio público). Descargados de poly.pizza: Worker `Yg2bQZO6Hj`, SWAT `Btfn3G5Xv4`, Astronaut `3hC2i0CTuO`, King `I1gTjmuK2m`, Casual Character `kZ3DmIoGip`, Business Man `JFrLIKqvCH` (https://poly.pizza/m/<id>). Optimizados con gltf-transform.
+- **Moto**: "Cartoony Purple Motorcycle" de **AliceCassie** — CC0 — https://poly.pizza/m/j20srJUjpB
+- **Autos**: Kenney Car Kit (CC0), ya incluidos.
+- **Música y efectos de sonido**: generados por código (WebAudio) dentro del juego; sin archivos de audio de terceros.
